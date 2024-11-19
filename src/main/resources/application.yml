@@ -1,0 +1,30 @@
+server:
+  port: 9090
+  servlet:
+    context-path: /feishuservice
+
+redis:
+  host: ${HOST}
+  port: 6479
+  password: ${REDIS_PASSWORD}
+  database: 4
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${HOST}:5432/weather_report?currentSchema=weather_report
+    username: postgres
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+#logging:
+#  config: classpath:logback-prod.xml
+
+hefeng:
+  private-key: ${HEFENG_PRIVATE_KEY}
+
+chatgpt:
+  api-key: ${CHATGPT_API_KEY}
+
+openai:
+  apikey:
+    strategy: ${APIKEY_STRATEGY} #round-robin, least-usage

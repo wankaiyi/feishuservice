@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+
+    <appender name="LoghubAppender" class="com.tencentcloudapi.cls.LoghubAppender">
+        <!--必选项-->
+<!--        域名配置 详见https://cloud.tencent.com/document/product/614/18940#.E5.9F.9F.E5.90.8D-->
+        <endpoint>ap-guangzhou.cls.tencentcs.com</endpoint>
+<!--        密钥信息 前往https://console.cloud.tencent.com/cam/capi获取-->
+        <accessKeyId>AKIDzrWyGRWP8g1KYeHjCUcZO2iefdYUNyOa</accessKeyId>
+        <accessKeySecret>98tQn0770mQsBMNH5oQuCPYZMv04wgEZ</accessKeySecret>
+        <topicId>024958bb-e75a-4cfb-8e49-4e799ad3ac19</topicId>
+
+        <!-- 可选项 详见 '参数说明'-->
+        <totalSizeInBytes>104857600</totalSizeInBytes>
+        <maxBlockMs>0</maxBlockMs>
+        <sendThreadCount>8</sendThreadCount>
+        <batchSizeThresholdInBytes>524288</batchSizeThresholdInBytes>
+        <batchCountThreshold>4096</batchCountThreshold>
+        <lingerMs>2000</lingerMs>
+        <retries>10</retries>
+        <baseRetryBackoffMs>100</baseRetryBackoffMs>
+        <maxRetryBackoffMs>50000</maxRetryBackoffMs>
+
+        <!-- 可选项 设置时间格式 -->
+        <timeFormat>yyyy-MM-dd HH:mm:ssZ</timeFormat>
+        <timeZone>Asia/Shanghai</timeZone>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg</pattern>
+        </encoder>
+        <mdcFields>traceId</mdcFields>
+        <mdcFields>service_name</mdcFields>
+    </appender>
+
+    <!-- 设置日志级别和输出目的地 -->
+    <root level="INFO">
+        <appender-ref ref="LoghubAppender"/>
+    </root>
+
+</configuration>
