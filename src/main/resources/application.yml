@@ -16,8 +16,8 @@ spring:
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-#logging:
-#  config: classpath:logback-prod.xml
+logging:
+  config: classpath:logback-prod.xml
 
 hefeng:
   private-key: ${HEFENG_PRIVATE_KEY}
