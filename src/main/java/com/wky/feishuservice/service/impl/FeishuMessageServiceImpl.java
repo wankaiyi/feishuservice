@@ -14,15 +14,21 @@ import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
 import groovy.lang.Tuple2;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RBlockingQueue;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -38,6 +44,9 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     private final RedisUtils redisUtils;
     private final OpenaiClient openaiClient;
     private final LocationServiceImpl locationServiceImpl;
+    @Resource
+    private ThreadPoolTaskExecutor openaiChatThreadPool;
+    private final RedissonClient redissonClient;
 
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
@@ -87,25 +96,50 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
             // 私聊直接回复
             if (StringUtils.equals("p2p", message.getChatType())) {
-                handleTextMessage(message, contentText, ReceiveType.OPEN_ID.getValue(), senderOpenId);
+                handleP2pMessage(message, contentText, ReceiveType.OPEN_ID.getValue(), senderOpenId);
             }
         }
     }
 
     //处理文本消息
-    private void handleTextMessage(FeishuP2pChatDTO.Message message, String contentText, String receiveType, String receiveId) {
+    private void handleP2pMessage(FeishuP2pChatDTO.Message message, String contentText, String receiveType, String receiveId) {
         if (contentText.startsWith("#天气")) {
             // 只保留中文字符
             String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
             Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather = locationServiceImpl.getWeather(location);
             feishuClient.handelWeather(locationAndWeather, receiveId, receiveType, "interactive");
         } else {
-            try {
-                ChatResponseBO chatResponseBO = openaiClient.chat(receiveId, contentText);
-                feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", message.getMessageId());
-            } catch (OpenAiException e) {
-                throw new FeishuP2pException(e.getMessage(), receiveId, receiveType);
-            }
+            handleOpenaiMsg(receiveId, receiveType, message.getMessageId(), contentText);
         }
     }
+
+    private void handleOpenaiMsg(String receiveId, String receiveType, String messageId, String contentText) {
+        String key = "openai:chat:queue:" + receiveId;
+        RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
+        queue.addAsync(contentText);
+        RLock lock = redissonClient.getLock("openai:chat:lock:" + receiveId);
+        CompletableFuture.runAsync(() -> {
+            try {
+                // 获取锁，获取成功后有看门狗续命
+                if (lock.tryLock()) {
+                    while (!queue.isEmpty()) {
+                        String text = queue.take();
+                        try {
+                            ChatResponseBO chatResponseBO = openaiClient.chat(receiveId, text);
+                            feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
+                        } catch (OpenAiException e) {
+                            feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.warn("线程被中断，结束任务。queue key: {}", key);
+            } finally {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+        }, openaiChatThreadPool);
+    }
+
 }
