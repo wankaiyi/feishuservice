@@ -1,36 +1,23 @@
 package com.wky.feishuservice.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
-import com.wky.feishuservice.cache.ChatMsgCache;
-import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.client.OpenaiClient;
-import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
-import com.wky.feishuservice.exceptions.OpenAiException;
-import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
-import com.wky.feishuservice.model.dto.WeatherResponseDTO;
-import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.service.FeishuMessageService;
+import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
+import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategyFactory;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
-import groovy.lang.Tuple2;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.redisson.api.RBlockingQueue;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -42,14 +29,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class FeishuMessageServiceImpl implements FeishuMessageService {
 
-    private final FeishuClient feishuClient;
     private final RedisUtils redisUtils;
-    private final OpenaiClient openaiClient;
-    private final LocationServiceImpl locationServiceImpl;
-    @Resource
-    private ThreadPoolTaskExecutor openaiChatThreadPool;
-    private final RedissonClient redissonClient;
-    private final ChatMsgCache chatMsgCache;
 
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
@@ -103,52 +83,13 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
         }
     }
 
-    //处理文本消息
     private void handleP2pMessage(FeishuP2pChatDTO.Message message, String contentText, String receiveType, String receiveId) {
-        if (contentText.startsWith("#天气")) {
-            // 只保留中文字符
-            String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
-            Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather = locationServiceImpl.getWeather(location);
-            feishuClient.handelWeather(locationAndWeather, receiveId, receiveType, "interactive");
-        } else if (contentText.startsWith("#reset")){
-            // 清空记忆
-            refreshMemory(receiveId);
-        } else {
-            handleOpenaiMsg(receiveId, receiveType, message.getMessageId(), contentText);
+        FeishuP2pMessageStrategy strategy = FeishuP2pMessageStrategyFactory.getStrategy(contentText);
+        if (Objects.isNull(strategy)) {
+            // 一般是输入为空
+            throw new FeishuP2pException("请检查输入是否为空", receiveId, receiveType);
         }
-    }
-
-    private void refreshMemory(String receiveId) {
-        chatMsgCache.refreshCache(receiveId);
-    }
-
-    private void handleOpenaiMsg(String receiveId, String receiveType, String messageId, String contentText) {
-        String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
-        RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
-        queue.addAsync(contentText);
-        RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
-        CompletableFuture.runAsync(() -> {
-            try {
-                // 获取锁，获取成功后有看门狗续命
-                if (lock.tryLock()) {
-                    while (!queue.isEmpty()) {
-                        String text = queue.take();
-                        try {
-                            ChatResponseBO chatResponseBO = openaiClient.chat(receiveId, text);
-                            feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
-                        } catch (OpenAiException e) {
-                            feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
-                        }
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.warn("线程被中断，结束任务。queue key: {}", key);
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-            }
-        }, openaiChatThreadPool);
+        strategy.handleMessage(contentText, receiveId, receiveType, message);
     }
 
 }
