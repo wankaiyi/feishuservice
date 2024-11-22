@@ -1,6 +1,7 @@
 package com.wky.feishuservice.model.dto;
 
 
+import com.alibaba.fastjson2.JSONObject;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -64,13 +65,17 @@ public class FeishuP2pChatDTO {
         private String messageType;
         private String updateTime;
 
-        @Data
         @AllArgsConstructor
         @NoArgsConstructor
         @JsonInclude(JsonInclude.Include.NON_NULL)
         @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
         public static class Content {
             private String text;
+
+            public String getText() {
+                JSONObject json = JSONObject.parseObject(text);
+                return json.getString("text");
+            }
         }
     }
 
