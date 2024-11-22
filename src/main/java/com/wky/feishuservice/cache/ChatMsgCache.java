@@ -49,4 +49,8 @@ public class ChatMsgCache {
         redisUtils.expire(key, 60 * 60 * 3 * 1000, TimeUnit.MILLISECONDS);
     }
 
+    public void refreshCache(String openId) {
+        redissonClient.getBucket(getKey(openId)).deleteAsync();
+    }
+
 }

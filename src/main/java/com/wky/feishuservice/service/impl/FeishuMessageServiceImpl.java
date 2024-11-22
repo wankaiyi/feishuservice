@@ -1,6 +1,7 @@
 package com.wky.feishuservice.service.impl;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.client.OpenaiClient;
 import com.wky.feishuservice.enumurations.ReceiveType;
@@ -47,6 +48,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
     private final RedissonClient redissonClient;
+    private final ChatMsgCache chatMsgCache;
 
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
@@ -85,7 +87,6 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             FeishuP2pChatDTO.SenderId senderId = sender.getSenderId();
             String senderOpenId = senderId.getOpenId();
 
-
             // 对于同一个事件，只处理一次
             if (Objects.nonNull(redisUtils.get("feishu:eventId:" + eventId))) {
                 log.info("事件重复，不处理，eventId: {}", eventId);
@@ -108,9 +109,16 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
             Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather = locationServiceImpl.getWeather(location);
             feishuClient.handelWeather(locationAndWeather, receiveId, receiveType, "interactive");
+        } else if (contentText.startsWith("#reset")){
+            // 清空记忆
+            refreshMemory(receiveId);
         } else {
             handleOpenaiMsg(receiveId, receiveType, message.getMessageId(), contentText);
         }
+    }
+
+    private void refreshMemory(String receiveId) {
+        chatMsgCache.refreshCache(receiveId);
     }
 
     private void handleOpenaiMsg(String receiveId, String receiveType, String messageId, String contentText) {
