@@ -28,6 +28,8 @@ import java.util.function.Supplier;
 /**
  * http client utils
  * 外部用完 ResponseBody body = Response.body() ，body 需要手动关闭
+ * @author wky
+ * @date 2024/11/22
  */
 @Slf4j
 public class HttpUtils {

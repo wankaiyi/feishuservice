@@ -2,7 +2,7 @@ package com.wky.feishuservice.client;
 
 import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.cache.ChatMsgCache;
-import com.wky.feishuservice.config.OpenaiConfig;
+import com.wky.feishuservice.config.OpenAiConfig;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.dto.ChatRequestDTO;
@@ -43,7 +43,7 @@ public class OpenaiClient {
 
     private static final Map<String, Map<String, String>> HEADER_PARAMS_MAPS = new HashMap<>();
     private final RedisUtils redisUtils;
-    private final OpenaiConfig openAiConfig;
+    private final OpenAiConfig openAiConfig;
 
     @PostConstruct
     public void init() {

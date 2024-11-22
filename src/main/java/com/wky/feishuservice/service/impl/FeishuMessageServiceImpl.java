@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.client.OpenaiClient;
+import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
@@ -122,10 +123,10 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     }
 
     private void handleOpenaiMsg(String receiveId, String receiveType, String messageId, String contentText) {
-        String key = "openai:chat:queue:" + receiveId;
+        String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
         RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
         queue.addAsync(contentText);
-        RLock lock = redissonClient.getLock("openai:chat:lock:" + receiveId);
+        RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
         CompletableFuture.runAsync(() -> {
             try {
                 // 获取锁，获取成功后有看门狗续命

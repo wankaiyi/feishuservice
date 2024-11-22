@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.wky.feishuservice.constants.FeishuConstants.FEISHU_OPENAI_KEY;
+import static com.wky.feishuservice.constants.FeishuConstants.FEISHU_OPENAI_REDIS_KEY;
 
 /**
  * @author wky
@@ -38,10 +38,6 @@ import static com.wky.feishuservice.constants.FeishuConstants.FEISHU_OPENAI_KEY;
 public class FeishuClient {
 
     private final RedisUtils redisUtils;
-
-    private static final String FEISHU_SEND_MESSAGE_TO_USER_URL = "https://open.feishu.cn/open-apis/im/v1/messages";
-    private static final String FEISHU_REPLY_USER_URL = "https://open.feishu.cn/open-apis/im/v1/messages/%s/reply";
-    private static final String FEISHU_GET_TENANT_ACCESS_TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 
     @TimedExecution(methodDescription = "飞书发送点对点消息")
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
@@ -65,10 +61,10 @@ public class FeishuClient {
         }};
         String url;
         if (StringUtils.isNotEmpty(messageId)) {
-            url = String.format(FEISHU_REPLY_USER_URL, messageId);
+            url = String.format(FeishuConstants.FEISHU_REPLY_USER_URL, messageId);
             feishuSendUserMsgDTO.setReceiveId(null);
         } else {
-            url = FEISHU_SEND_MESSAGE_TO_USER_URL;
+            url = FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL;
         }
         String result = HttpUtils.postForm(url, data, headerParams, requestParams);
         FeishuResponseDTO feishuResponse = JacksonUtils.deserialize(result, FeishuResponseDTO.class);
@@ -81,13 +77,13 @@ public class FeishuClient {
 
     @TimedExecution(methodDescription = "获取飞书tenant_access_token")
     public String getTenantAccessToken() {
-        String accessToken = redisUtils.get(FEISHU_OPENAI_KEY);
+        String accessToken = redisUtils.get(FEISHU_OPENAI_REDIS_KEY);
         if (Objects.isNull(accessToken)) {
             String data = JacksonUtils.serialize(new HashMap<>() {{
                 put("app_id", FeishuConstants.FEISHU_OPENAI_APP_ID);
                 put("app_secret", FeishuConstants.FEISHU_OPENAI_APP_SECRET);
             }});
-            String result = HttpUtils.postForm(FEISHU_GET_TENANT_ACCESS_TOKEN_URL, data);
+            String result = HttpUtils.postForm(FeishuConstants.FEISHU_GET_TENANT_ACCESS_TOKEN_URL, data);
             JSONObject jsonObject = JSONObject.parseObject(result);
             if (Objects.nonNull(jsonObject)) {
                 accessToken = jsonObject.getString("tenant_access_token");
@@ -144,7 +140,7 @@ public class FeishuClient {
         feishuSendUserMsgDTO.setMsgType("text");
         feishuSendUserMsgDTO.setReceiveId(e.getReceiveId());
         String data = JacksonUtils.serialize(feishuSendUserMsgDTO);
-        HttpUtils.postForm(FEISHU_SEND_MESSAGE_TO_USER_URL, data, e.getHeaderParams(), e.getRequestParams());
+        HttpUtils.postForm(FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL, data, e.getHeaderParams(), e.getRequestParams());
     }
 
     public void handelWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {

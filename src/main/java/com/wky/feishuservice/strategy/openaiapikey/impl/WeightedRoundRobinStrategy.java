@@ -1,6 +1,6 @@
 package com.wky.feishuservice.strategy.openaiapikey.impl;
 
-import com.wky.feishuservice.config.OpenaiConfig;
+import com.wky.feishuservice.config.OpenAiConfig;
 import com.wky.feishuservice.strategy.openaiapikey.ApiKeySelectionStrategy;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ import java.util.List;
 public class WeightedRoundRobinStrategy implements ApiKeySelectionStrategy {
 
     private final RedissonClient redissonClient;
-    private final OpenaiConfig openaiConfig;
+    private final OpenAiConfig openaiConfig;
     private static final String API_KEY_ZSET_KEY = "openai:weighted_round_robin_strategy:api_key_zset";
     private static final String LUA_SCRIPT = """
                 local api_keys = redis.call('HGETALL', KEYS[1])

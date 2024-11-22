@@ -1,6 +1,6 @@
 package com.wky.feishuservice.strategy.openaiapikey.impl;
 
-import com.wky.feishuservice.config.OpenaiConfig;
+import com.wky.feishuservice.config.OpenAiConfig;
 import com.wky.feishuservice.strategy.openaiapikey.ApiKeySelectionStrategy;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ import java.util.List;
 public class RandomStrategy implements ApiKeySelectionStrategy {
 
     private final RedissonClient redissonClient;
-    private final OpenaiConfig openaiConfig;
+    private final OpenAiConfig openaiConfig;
     private static final String API_KEY_LIST_KEY = "openai:random_strategy:api_key_list";
     private static final String LUA_SCRIPT = """
                 local listKey = KEYS[1]

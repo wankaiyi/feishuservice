@@ -14,7 +14,7 @@ import java.util.List;
  */
 @Configuration
 @Data
-public class OpenaiConfig {
+public class OpenAiConfig {
 
     @Value("${chatgpt.api-key}")
     private List<String> apiKeys;

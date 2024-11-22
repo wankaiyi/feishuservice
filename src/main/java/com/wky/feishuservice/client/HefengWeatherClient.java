@@ -1,5 +1,6 @@
 package com.wky.feishuservice.client;
 
+import com.wky.feishuservice.constants.HeFengConstants;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.utils.HttpUtils;
@@ -21,17 +22,14 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 public class HefengWeatherClient {
 
-    public static final String HEFENG_3DAYS_WEATHER_URL = "https://devapi.qweather.com/v7/weather/3d";
-
     @Value("${hefeng.private-key}")
     public String HEFENG_PRIVATE_KEY;
-    public static final String LANGUAGE_ZH = "zh";
 
     public WeatherResponseDTO getWeather(LocationDO location) {
-        String res = HttpUtils.get(HEFENG_3DAYS_WEATHER_URL, new HashMap<>() {{
+        String res = HttpUtils.get(HeFengConstants.HEFENG_3DAYS_WEATHER_URL, new HashMap<>() {{
             put("location", location.getId());
             put("key", HEFENG_PRIVATE_KEY);
-            put("lang", LANGUAGE_ZH);
+            put("lang", HeFengConstants.LANGUAGE_ZH);
         }});
         return JacksonUtils.deserialize(res, WeatherResponseDTO.class);
     }
