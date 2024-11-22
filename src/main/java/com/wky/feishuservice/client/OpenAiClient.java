@@ -3,10 +3,13 @@ package com.wky.feishuservice.client;
 import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.config.OpenAiConfig;
+import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.dto.ChatRequestDTO;
 import com.wky.feishuservice.model.dto.ChatResponseDTO;
+import com.wky.feishuservice.model.dto.ImageGenerateRequestDTO;
+import com.wky.feishuservice.model.dto.ImageGenerateResponseDTO;
 import com.wky.feishuservice.selector.ApiKeySelector;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -31,14 +34,12 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OpenaiClient {
+public class OpenAiClient {
 
     private final ChatMsgCache chatMsgCache;
 
     private static final String GPT_4_O_MODEL = "gpt-4o";
-    private static final String OPENAI_PROXY_BASE_URL = "https://openai-proxy-openai-proxy-jrrrbwnaqt.us-west-1.fcapp.run";
-    //    private final String chatUrl = "https://api.openai.com/v1/chat/completions";
-    private static final String CHAT_URL = OPENAI_PROXY_BASE_URL + "/v1/chat/completions";
+
     private final ApiKeySelector apiKeySelector;
 
     private static final Map<String, Map<String, String>> HEADER_PARAMS_MAPS = new HashMap<>();
@@ -92,7 +93,7 @@ public class OpenaiClient {
         ChatRequestDTO chatRequestDTO = new ChatRequestDTO(GPT_4_O_MODEL, messages);
         String data = JacksonUtils.serialize(chatRequestDTO);
         // 接口超时会导致返回null
-        String result = HttpUtils.postForm(CHAT_URL, data, HEADER_PARAMS_MAPS.get(apiKey), new HashMap<>() {{
+        String result = HttpUtils.postForm(OpenAiConstants.CHAT_URL, data, HEADER_PARAMS_MAPS.get(apiKey), new HashMap<>() {{
             put("model", GPT_4_O_MODEL);
         }});
         log.info("chatgpt result: {}", result);
@@ -128,6 +129,17 @@ public class OpenaiClient {
     public BigDecimal getPrice(int promptTokens, int completionTokens) {
         return PRICE_PER_INPUT_TOKEN.multiply(BigDecimal.valueOf(promptTokens))
                 .add(PRICE_PER_OUTPUT_TOKEN.multiply(BigDecimal.valueOf(completionTokens)));
+    }
+
+    public ImageGenerateResponseDTO generateImage(String prompt) {
+        ImageGenerateRequestDTO imageGenerateRequestDTO = new ImageGenerateRequestDTO()
+                .setPrompt(prompt);
+        String result = HttpUtils.postForm(
+                OpenAiConstants.IMAGE_GENERATION_URL,
+                JacksonUtils.serialize(imageGenerateRequestDTO),
+                HEADER_PARAMS_MAPS.get(apiKeySelector.selectApiKey())
+        );
+        return JacksonUtils.deserialize(result, ImageGenerateResponseDTO.class);
     }
 
 }

@@ -6,8 +6,9 @@ import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.dto.DailyWeatherDTO;
-import com.wky.feishuservice.model.dto.FeishuResponseDTO;
+import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuSendUserMsgDTO;
+import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.utils.HttpUtils;
@@ -19,7 +20,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +73,7 @@ public class FeishuClient {
             url = FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL;
         }
         String result = HttpUtils.postForm(url, data, headerParams, requestParams);
-        FeishuResponseDTO feishuResponse = JacksonUtils.deserialize(result, FeishuResponseDTO.class);
+        FeishuP2pResponseDTO feishuResponse = JacksonUtils.deserialize(result, FeishuP2pResponseDTO.class);
         if (!Objects.equals(feishuResponse.getCode(), 0) || Objects.nonNull(feishuResponse.getError())) {
             log.error("飞书机器人发送消息失败，message: {}, error: {}", feishuResponse.getMsg(), feishuResponse.getError());
             throw new FeishuP2pException(feishuResponse.getMsg() + "，" + feishuResponse.getError(), receiveId, headerParams, requestParams);
@@ -100,7 +106,7 @@ public class FeishuClient {
     }
 
     // 第一个 %s 是 markdown 格式，不加双引号，要使用 json 工具类序列化一遍来转义内部的符号
-    private static final String TEMPLATE = """
+    private static final String CHAT_RESPONSE_TEMPLATE = """
             {
                 "zh_cn": {
                     "content": [
@@ -131,7 +137,7 @@ public class FeishuClient {
         String model = chatResponseBO.getModel();
         Integer totalTokens = chatResponseBO.getTotalTokens();
         BigDecimal price = chatResponseBO.getPrice();
-        return String.format(TEMPLATE, JacksonUtils.serialize(content), model, totalTokens, price);
+        return String.format(CHAT_RESPONSE_TEMPLATE, JacksonUtils.serialize(content), model, totalTokens, price);
     }
 
     public void handelP2pException(FeishuP2pException e) {
@@ -234,5 +240,56 @@ public class FeishuClient {
                 }
                 """);
         return cardBuilder.toString();
+    }
+
+    public String uploadImage(String base64, String receiveId, String receiveType) {
+        String accessToken = getTenantAccessToken();
+        String result = HttpUtils.postFormData(FeishuConstants.FEISHU_UPLOAD_IMAGE_URL, new HashMap<>() {{
+                    put("image", convertBase64ToTempFile(base64));
+                }},
+                new HashMap<>() {{
+                    put("Authorization", "Bearer " + accessToken);
+                    put("Content-Type", "multipart/form-data");
+                }},
+                new HashMap<>() {{
+                    put("image_type", "message");
+                }});
+        FeishuUploadResponseDTO response = JacksonUtils.deserialize(result, FeishuUploadResponseDTO.class);
+        if (response.getCode() != 0) {
+            log.error("飞书上传图片失败，result: {}", result);
+            throw new FeishuP2pException("上传图片失败，" + response.getMsg(), receiveId, receiveType);
+        }
+        return response.getData().getImageKey();
+    }
+
+    public static File convertBase64ToTempFile(String base64Str) {
+        try {
+            // 解码 base64 字符串为字节数组
+            byte[] decodedBytes = Base64.getDecoder().decode(base64Str);
+
+            // 创建临时文件。系统会自动在默认的临时目录下创建该文件。
+            File tempFile = Files.createTempFile("image_", ".png").toFile();
+
+            // 将字节写入临时文件
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                fos.write(decodedBytes);
+            }
+
+            return tempFile;
+        } catch (IOException e) {
+            log.error("base64 字符串转临时文件失败， base64Str: {}", base64Str, e);
+            return null;
+        }
+    }
+
+    public void sendImageMessage(String imageKey, String receiveId, String receiveType, String messageId) {
+        String tenantAccessToken = getTenantAccessToken();
+        sendFeishuP2pMsg(getImageKeyContent(imageKey), receiveId, receiveType, "image", tenantAccessToken, messageId);
+    }
+
+    private String getImageKeyContent(String imageKey) {
+        return JacksonUtils.serialize(new HashMap<>() {{
+            put("image_key", imageKey);
+        }});
     }
 }

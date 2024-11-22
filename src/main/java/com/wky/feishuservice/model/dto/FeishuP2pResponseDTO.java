@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FeishuResponseDTO {
+public class FeishuP2pResponseDTO {
     private int code;
     private String msg;
     private Data data;

@@ -18,5 +18,5 @@ public class FeishuConstants {
 
     public static final String FEISHU_GET_TENANT_ACCESS_TOKEN_URL = "https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal";
 
-
+    public static final String FEISHU_UPLOAD_IMAGE_URL = "https://open.feishu.cn/open-apis/im/v1/images";
 }

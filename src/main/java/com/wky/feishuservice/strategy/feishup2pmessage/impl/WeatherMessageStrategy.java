@@ -34,7 +34,7 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.isNoneBlank(contentText) && contentText.startsWith("#天气");
+        return StringUtils.startsWith(contentText, "#天气");
     }
 
 }

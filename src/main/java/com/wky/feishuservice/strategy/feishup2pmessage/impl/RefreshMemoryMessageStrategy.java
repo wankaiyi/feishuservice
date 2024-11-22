@@ -4,6 +4,7 @@ import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -25,6 +26,6 @@ public class RefreshMemoryMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return false;
+        return StringUtils.startsWith(contentText, "#reset");
     }
 }

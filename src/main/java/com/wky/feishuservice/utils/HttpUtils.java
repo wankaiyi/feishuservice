@@ -5,6 +5,7 @@ import okhttp3.ConnectionPool;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -13,6 +14,7 @@ import okhttp3.ResponseBody;
 import okio.Buffer;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.Collections;
@@ -34,6 +36,7 @@ import java.util.function.Supplier;
 @Slf4j
 public class HttpUtils {
 
+    public static final MediaType FORM_DATA = MediaType.parse("multipart/form-data");
     public static final MediaType FORM = MediaType.parse("application/x-www-form-urlencoded");
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     public static final int DEFAULT_TIME_LENGTH = 1000;
@@ -491,5 +494,32 @@ public class HttpUtils {
         return retry(httpRequest, null, null, null);
     }
 
+    public static String postFormData(String url, Map<String, File> fileMap, Map<String, String> headersParams, Map<String, String> formParams) {
+        MultipartBody.Builder formDataBuilder = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM);
+        buildFormData(formDataBuilder, formParams, fileMap);
+
+        Request.Builder builder = new Request.Builder()
+                .url(url)
+                .post(formDataBuilder.build());
+
+        if (ObjectUtils.isNotEmpty(headersParams)) {
+            builder.headers(setHeaders(headersParams));
+        }
+        return doParseResponseBody(execute(okHttpClient, builder));
+    }
+
+    private static void buildFormData(MultipartBody.Builder formDataBuilder, Map<String, String> formParams, Map<String, File> fileMap) {
+        if (ObjectUtils.isNotEmpty(formParams)) {
+            for (Map.Entry<String, String> entry : formParams.entrySet()) {
+                formDataBuilder.addFormDataPart(entry.getKey(), entry.getValue());
+            }
+        if (ObjectUtils.isNotEmpty(fileMap)) {
+            for (Map.Entry<String, File> entry : fileMap.entrySet()) {
+                formDataBuilder.addFormDataPart(entry.getKey(), entry.getValue().getName(), RequestBody.create(entry.getValue(), FORM_DATA));
+            }
+        }
+    }
+    }
 }
 
