@@ -6,8 +6,9 @@ import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
-import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
+import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
+import com.wky.feishuservice.utils.UserInfoContext;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,10 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
     private ThreadPoolTaskExecutor openaiChatThreadPool;
 
     @Override
-    public void handleMessage(String contentText, String receiveId, String receiveType, FeishuP2pChatDTO.Message message) {
+    public void handleMessage(String contentText, String messageId) {
+        UserInfo userInfo = UserInfoContext.getUserInfo();
+        String receiveId = userInfo.getReceiveId();
+        String receiveType = userInfo.getReceiveType();
         String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
         RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
         queue.addAsync(contentText);
@@ -51,7 +55,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                         String text = queue.take();
                         try {
                             ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
-                            feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", message.getMessageId());
+                            feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
                         } catch (OpenAiException e) {
                             feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
                         }

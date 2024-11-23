@@ -1,4 +1,4 @@
-package com.wky.feishuservice.model;
+package com.wky.feishuservice.model.common;
 
 import lombok.Data;
 

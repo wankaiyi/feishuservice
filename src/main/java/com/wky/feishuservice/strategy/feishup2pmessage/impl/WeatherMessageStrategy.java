@@ -1,11 +1,12 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
+import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.service.LocationService;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
+import com.wky.feishuservice.utils.UserInfoContext;
 import groovy.lang.Tuple2;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +26,10 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
     private final LocationService locationService;
 
     @Override
-    public void handleMessage(String contentText, String receiveId, String receiveType, FeishuP2pChatDTO.Message message) {
+    public void handleMessage(String contentText, String messageId) {
+        UserInfo userInfo = UserInfoContext.getUserInfo();
+        String receiveId = userInfo.getReceiveId();
+        String receiveType = userInfo.getReceiveType();
         // 只保留中文字符
         String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
         Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather = locationService.getWeather(location);

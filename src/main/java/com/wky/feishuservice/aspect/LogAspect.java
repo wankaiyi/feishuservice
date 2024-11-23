@@ -2,7 +2,7 @@ package com.wky.feishuservice.aspect;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wky.feishuservice.annotation.Log;
-import com.wky.feishuservice.model.SystemLog;
+import com.wky.feishuservice.model.common.SystemLog;
 import com.wky.feishuservice.utils.IPUtils;
 import com.wky.feishuservice.utils.ServletUtils;
 import jakarta.servlet.http.HttpServletRequest;

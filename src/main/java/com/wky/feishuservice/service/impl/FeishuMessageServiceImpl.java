@@ -3,12 +3,14 @@ package com.wky.feishuservice.service.impl;
 import com.alibaba.fastjson2.JSONObject;
 import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
+import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategyFactory;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
+import com.wky.feishuservice.utils.UserInfoContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -78,18 +80,26 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
             // 私聊直接回复
             if (StringUtils.equals("p2p", message.getChatType())) {
-                handleP2pMessage(message, contentText, ReceiveType.OPEN_ID.getValue(), senderOpenId);
+                String receiveType = ReceiveType.OPEN_ID.getValue();
+                try {
+                    UserInfoContext.setUserInfo(new UserInfo()
+                            .setReceiveId(senderOpenId)
+                            .setReceiveType(receiveType));
+                    handleP2pMessage(message.getMessageId(), contentText, receiveType, senderOpenId);
+                } finally {
+                    UserInfoContext.removeUserInfo();
+                }
             }
         }
     }
 
-    private void handleP2pMessage(FeishuP2pChatDTO.Message message, String contentText, String receiveType, String receiveId) {
+    private void handleP2pMessage(String messageId, String contentText, String receiveType, String receiveId) {
         FeishuP2pMessageStrategy strategy = FeishuP2pMessageStrategyFactory.getStrategy(contentText);
         if (Objects.isNull(strategy)) {
             // 一般是输入为空
             throw new FeishuP2pException("请检查输入是否为空", receiveId, receiveType);
         }
-        strategy.handleMessage(contentText, receiveId, receiveType, message);
+        strategy.handleMessage(contentText, messageId);
     }
 
 }
