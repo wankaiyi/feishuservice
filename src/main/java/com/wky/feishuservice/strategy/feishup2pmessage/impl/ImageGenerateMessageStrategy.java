@@ -1,7 +1,8 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.client.OpenAiClient;
+import com.wky.feishuservice.client.OpenaiClient;
+import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.ImageGenerateResponseDTO;
@@ -20,10 +21,10 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
-public class ImageMessageStrategy implements FeishuP2pMessageStrategy {
+public class ImageGenerateMessageStrategy implements FeishuP2pMessageStrategy {
 
-    private static final String PREFIX = "#image";
-    private final OpenAiClient openAiClient;
+    private static final String PREFIX = FeishuP2pPrefix.IMAGE_GENERATE.getPrefix();
+    private final OpenaiClient openaiClient;
     private final FeishuClient feishuClient;
 
     @Override
@@ -31,7 +32,7 @@ public class ImageMessageStrategy implements FeishuP2pMessageStrategy {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
-        ImageGenerateResponseDTO imageGenerateResponseDTO = openAiClient.generateImage(contentText.substring(PREFIX.length()));
+        ImageGenerateResponseDTO imageGenerateResponseDTO = openaiClient.generateImage(contentText.substring(PREFIX.length()));
         Optional.ofNullable(imageGenerateResponseDTO).orElseThrow(() -> new FeishuP2pException("图片生成失败", receiveId, receiveType));
         List<ImageGenerateResponseDTO.DataItem> data = imageGenerateResponseDTO.getData();
         data.forEach(base64 -> {
