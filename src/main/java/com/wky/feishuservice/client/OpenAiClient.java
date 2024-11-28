@@ -66,7 +66,7 @@ public class OpenAiClient {
         ChatResponseDTO response = processChatgptRequest(messages, apiKey);
         ChatResponseDTO.ChatError error;
         if (Objects.nonNull(error = response.getError())) {
-            throw new OpenAiException(error.getMessage());
+            throw new OpenAiException(String.format("apikey: %s，请求发生错误：%s", desensitizeString(apiKey), error.getMessage()));
         }
 
         String resContent = response.getChoices()[0].getMessageResp().getContent();
@@ -87,6 +87,26 @@ public class OpenAiClient {
         chatMsgCache.addMsgCache(openId, new ChatRequestDTO.Message()
                 .setContent(resContent)
                 .setRole("assistant"));
+    }
+
+    /**
+     * 脱敏字符串，只保留前后5个字符，中间用星号代替
+     */
+    public static String desensitizeString(String str) {
+        // 检查字符串长度是否足够长
+        if (str.length() <= 10) {
+            // 如果字符串长度不超过10个字符，则不进行脱敏
+            return str;
+        }
+
+        // 获取开头和结尾各5个字符
+        String start = str.substring(0, 5);
+        String end = str.substring(str.length() - 5);
+
+        // 中间部分需要的星号数量
+        int starsCount = str.length() - 10;
+
+        return start + "*".repeat(starsCount) + end;
     }
 
     private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey) {
