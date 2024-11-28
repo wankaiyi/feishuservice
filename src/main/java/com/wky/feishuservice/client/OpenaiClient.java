@@ -34,7 +34,7 @@ import java.util.Objects;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class OpenAiClient {
+public class OpenaiClient {
 
     private final ChatMsgCache chatMsgCache;
 

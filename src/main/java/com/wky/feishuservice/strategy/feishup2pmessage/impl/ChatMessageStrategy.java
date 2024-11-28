@@ -1,8 +1,9 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.client.OpenAiClient;
+import com.wky.feishuservice.client.OpenaiClient;
 import com.wky.feishuservice.constants.OpenAiConstants;
+import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
@@ -33,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
 
     private final RedissonClient redissonClient;
-    private final OpenAiClient openAiClient;
+    private final OpenaiClient openaiClient;
     private final FeishuClient feishuClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
@@ -54,7 +55,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                     while (!queue.isEmpty()) {
                         String text = queue.take();
                         try {
-                            ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
+                            ChatResponseBO chatResponseBO = openaiClient.chat(receiveId, text);
                             feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
                         } catch (OpenAiException e) {
                             feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
@@ -73,6 +74,6 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.isNotBlank(contentText) && !contentText.startsWith("#");
+        return StringUtils.isNoneBlank(contentText) && FeishuP2pPrefix.notInFeishuP2pPrefixes(contentText);
     }
 }

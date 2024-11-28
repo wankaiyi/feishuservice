@@ -1,6 +1,7 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
+import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
@@ -38,7 +39,7 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, "#天气");
+        return StringUtils.startsWith(contentText, FeishuP2pPrefix.WEATHER.getPrefix());
     }
 
 }

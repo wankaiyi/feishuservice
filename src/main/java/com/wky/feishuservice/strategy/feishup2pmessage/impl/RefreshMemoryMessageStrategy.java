@@ -1,6 +1,7 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.cache.ChatMsgCache;
+import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
@@ -29,6 +30,6 @@ public class RefreshMemoryMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, "#reset");
+        return StringUtils.startsWith(contentText, FeishuP2pPrefix.REFRESH_MEMORY.getPrefix());
     }
 }
