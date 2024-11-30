@@ -10,4 +10,5 @@ public interface ApiKeySelectionStrategy {
 
     String selectApiKey();
 
+    void init() throws IllegalAccessException;
 }

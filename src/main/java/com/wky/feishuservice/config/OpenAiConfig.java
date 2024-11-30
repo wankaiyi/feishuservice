@@ -16,6 +16,6 @@ import java.util.List;
 @Data
 public class OpenAiConfig {
 
-    @Value("${chatgpt.api-key}")
+    @Value("#{'${chatgpt.api-keys}'.split(',')}")
     private List<String> apiKeys;
 }
