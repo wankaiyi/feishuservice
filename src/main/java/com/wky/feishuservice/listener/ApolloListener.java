@@ -24,18 +24,29 @@ public class ApolloListener {
 
     private static final String CHATGPT_API_KEYS = "chatgpt.api-keys";
 
-    @ApolloConfigChangeListener
+    /**
+     * 自定义的apollo配置监听器和apollo Java客户端自带的配置监听器是不同线程执行的，
+     * 自定义的所有配置监听器也是不同线程执行的，所以在这个方法开始时和结束时分别获取一
+     * 次配置得到的结果可能不同
+     */
+    @ApolloConfigChangeListener(value = {"openai"})
     public void onChange(ConfigChangeEvent changeEvent) {
         for (String changedKey : changeEvent.changedKeys()) {
             if (CHATGPT_API_KEYS.equals(changedKey)) {
+                log.info("监听到apollo配置变化：{}", openAiConfig.getApiKeys());
                 try {
+                    // 延迟1秒，等待实际配置更新
+                    Thread.sleep(1000);
                     apiKeySelectionStrategy.init();
                 } catch (IllegalAccessException e) {
                     log.error("apikeys为空，无法更新配置");
                     String oldValue = changeEvent.getChange(changedKey).getOldValue();
                     openAiConfig.setApiKeys(List.of(oldValue.split(",")));
+                } catch (InterruptedException e) {
+
                 }
             }
         }
+        log.info("更新配置完成：{}", openAiConfig.getApiKeys());
     }
 }
