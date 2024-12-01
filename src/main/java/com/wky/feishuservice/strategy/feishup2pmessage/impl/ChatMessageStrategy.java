@@ -1,7 +1,7 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.client.OpenaiClient;
+import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
 
     private final RedissonClient redissonClient;
-    private final OpenaiClient openaiClient;
+    private final OpenAiClient openAiClient;
     private final FeishuClient feishuClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
@@ -55,7 +55,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                     while (!queue.isEmpty()) {
                         String text = queue.take();
                         try {
-                            ChatResponseBO chatResponseBO = openaiClient.chat(receiveId, text);
+                            ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
                             feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
                         } catch (OpenAiException e) {
                             feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));

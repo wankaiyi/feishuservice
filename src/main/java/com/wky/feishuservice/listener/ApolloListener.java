@@ -2,6 +2,7 @@ package com.wky.feishuservice.listener;
 
 import com.ctrip.framework.apollo.model.ConfigChangeEvent;
 import com.ctrip.framework.apollo.spring.annotation.ApolloConfigChangeListener;
+import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.config.OpenAiConfig;
 import com.wky.feishuservice.strategy.openaiapikey.ApiKeySelectionStrategy;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ApolloListener {
 
     private final ApiKeySelectionStrategy apiKeySelectionStrategy;
     private final OpenAiConfig openAiConfig;
+    private final OpenAiClient openAiClient;
 
     private static final String CHATGPT_API_KEYS = "chatgpt.api-keys";
 
@@ -38,6 +40,7 @@ public class ApolloListener {
                     // 延迟1秒，等待实际配置更新
                     Thread.sleep(1000);
                     apiKeySelectionStrategy.init();
+                    openAiClient.init();
                 } catch (IllegalAccessException e) {
                     log.error("apikeys为空，无法更新配置");
                     String oldValue = changeEvent.getChange(changedKey).getOldValue();
