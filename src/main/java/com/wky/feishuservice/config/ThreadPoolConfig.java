@@ -32,7 +32,7 @@ public class ThreadPoolConfig {
         executor.setThreadNamePrefix("openai-chat-thread-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.setRejectedExecutionHandler((runner, consumeThreadPool) -> {
-            String errorText = doPrintThreadPoolConfig("openai-chat-thread-", consumeThreadPool);
+            String errorText = doPrintThreadPoolConfig(consumeThreadPool);
             log.error("触发openai对话线程池拒绝策略 {}", errorText);
             // 告警
             AlertUtils.sendThreadPoolRejectAlert(errorText);
@@ -45,16 +45,26 @@ public class ThreadPoolConfig {
         return executor;
     }
 
-    private String doPrintThreadPoolConfig(String key, ThreadPoolExecutor threadPoolExecutor) {
-        return String.join("|",
-                "thread.prefix.key = " + key,
-                "core.pool.size = " + threadPoolExecutor.getCorePoolSize(),
-                "maximum.pool.size = " + threadPoolExecutor.getMaximumPoolSize(),
-                "largest.pool.size = " + threadPoolExecutor.getLargestPoolSize(),
-                "pool.size = " + threadPoolExecutor.getPoolSize(),
-                "active.count = " + threadPoolExecutor.getActiveCount(),
-                "queue.size = " + threadPoolExecutor.getQueue().size(),
-                "queue.remain.capacity = " + threadPoolExecutor.getQueue().remainingCapacity());
+    public static String doPrintThreadPoolConfig(ThreadPoolExecutor threadPoolExecutor) {
+        int corePoolSize = threadPoolExecutor.getCorePoolSize();
+        int maximumPoolSize = threadPoolExecutor.getMaximumPoolSize();
+        int poolSize = threadPoolExecutor.getPoolSize();
+        int activeCount = threadPoolExecutor.getActiveCount();
+        long completedTaskCount = threadPoolExecutor.getCompletedTaskCount();
+        long taskCount = threadPoolExecutor.getTaskCount();
+        int queueSize = threadPoolExecutor.getQueue().size();
+        int remainingCapacity = threadPoolExecutor.getQueue().remainingCapacity();
+        return String.format("""
+                        **核心线程数**：%d
+                        **最大线程数**：%d
+                        **当前线程数**：%d
+                        **活跃线程数**：%d
+                        **完成任务数**：%d
+                        **总任务数**：%d
+                        **队列大小**：%d
+                        **剩余容量**：%d""",
+                corePoolSize, maximumPoolSize, poolSize, activeCount,
+                completedTaskCount, taskCount, queueSize, remainingCapacity);
     }
 
 }

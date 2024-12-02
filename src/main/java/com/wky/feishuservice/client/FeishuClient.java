@@ -25,6 +25,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -45,13 +47,13 @@ public class FeishuClient {
 
     private final RedisUtils redisUtils;
 
-    @TimedExecution(methodDescription = "飞书发送点对点消息")
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
-        String accessToken = getTenantAccessToken();
-        sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, accessToken, messageId);
+        sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
     }
 
-    private void sendFeishuP2pMsg(String content, String receiveId, String receiveIdType, String msgType, String accessToken, String messageId) {
+    @TimedExecution(methodDescription = "飞书发送点对点消息")
+    public void sendFeishuP2pMsg(String content, String receiveId, String receiveIdType, String msgType, String messageId) {
+        String accessToken = getTenantAccessToken();
         FeishuSendUserMsgDTO feishuSendUserMsgDTO = new FeishuSendUserMsgDTO()
                 .setMsgType(msgType)
                 .setContent(content)
@@ -151,7 +153,7 @@ public class FeishuClient {
 
     public void handelWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {
         String content = getContent(locationAndWeather);
-        sendFeishuP2pMsg(content, receiveId, receiveType, msgType, getTenantAccessToken(), null);
+        sendFeishuP2pMsg(content, receiveId, receiveType, msgType, null);
     }
 
 
@@ -283,13 +285,50 @@ public class FeishuClient {
     }
 
     public void sendImageMessage(String imageKey, String receiveId, String receiveType, String messageId) {
-        String tenantAccessToken = getTenantAccessToken();
-        sendFeishuP2pMsg(getImageKeyContent(imageKey), receiveId, receiveType, "image", tenantAccessToken, messageId);
+        sendFeishuP2pMsg(getImageKeyContent(imageKey), receiveId, receiveType, "image", messageId);
     }
 
     private String getImageKeyContent(String imageKey) {
         return JacksonUtils.serialize(new HashMap<>() {{
             put("image_key", imageKey);
         }});
+    }
+
+    public void sendTpP2pMessage(String threadPoolInfo, String receiveId, String receiveType, String messageId) {
+        sendFeishuP2pMsg(buildMessageCard(threadPoolInfo), receiveId, receiveType, "interactive", messageId);
+    }
+
+    private static final String THREAD_POOL_INFO_CARD = """
+            {
+                "config": {
+                    "wide_screen_mode": true
+                },
+                "header": {
+                    "title": {
+                        "tag": "plain_text",
+                        "content": "openai对话线程池快照 ——— %s"
+                    },
+                    "template": "blue"
+                },
+                "elements": [
+                    {
+                        "tag": "div",
+                        "fields": [
+                            {
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": %s
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+            """;
+    public static String buildMessageCard(String threadPoolInfo) {
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = now.format(formatter);
+        return String.format(THREAD_POOL_INFO_CARD, formattedDate, JacksonUtils.serialize(threadPoolInfo));
     }
 }
