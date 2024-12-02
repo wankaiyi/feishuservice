@@ -1,5 +1,6 @@
 package com.wky.feishuservice.client;
 
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.constants.FeishuConstants;
@@ -48,7 +49,8 @@ public class FeishuClient {
     private final RedisUtils redisUtils;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
-        sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
+        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        self.sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
     }
 
     @TimedExecution(methodDescription = "飞书发送点对点消息")
@@ -153,7 +155,8 @@ public class FeishuClient {
 
     public void handelWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {
         String content = getContent(locationAndWeather);
-        sendFeishuP2pMsg(content, receiveId, receiveType, msgType, null);
+        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        self.sendFeishuP2pMsg(content, receiveId, receiveType, msgType, null);
     }
 
 
@@ -285,7 +288,8 @@ public class FeishuClient {
     }
 
     public void sendImageMessage(String imageKey, String receiveId, String receiveType, String messageId) {
-        sendFeishuP2pMsg(getImageKeyContent(imageKey), receiveId, receiveType, "image", messageId);
+        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        self.sendFeishuP2pMsg(getImageKeyContent(imageKey), receiveId, receiveType, "image", messageId);
     }
 
     private String getImageKeyContent(String imageKey) {
@@ -295,7 +299,8 @@ public class FeishuClient {
     }
 
     public void sendTpP2pMessage(String threadPoolInfo, String receiveId, String receiveType, String messageId) {
-        sendFeishuP2pMsg(buildMessageCard(threadPoolInfo), receiveId, receiveType, "interactive", messageId);
+        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        self.sendFeishuP2pMsg(buildMessageCard(threadPoolInfo), receiveId, receiveType, "interactive", messageId);
     }
 
     private static final String THREAD_POOL_INFO_CARD = """

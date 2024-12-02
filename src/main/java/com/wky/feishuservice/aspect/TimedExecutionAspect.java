@@ -43,11 +43,14 @@ public class TimedExecutionAspect {
     }
 
     public void handleAfter(String methodDescription, Throwable e) {
-        if (e== null) {
-            long startTime = startTimes.get().pop();
-            long endTime = System.currentTimeMillis();
-            long executionTime = endTime - startTime;
+        long startTime = startTimes.get().pop();
+        long endTime = System.currentTimeMillis();
+        long executionTime = endTime - startTime;
+        if (e == null) {
             log.info("\"{}\"方法执行结束，执行时间：{}ms", methodDescription, executionTime);
+        } else {
+            // 有异常记录异常信息，不将异常重新抛出去，防止记录的错误日志信息过多不方便定位
+            log.error("\"{}\"方法执行结束，执行时间：{}ms，出现异常：", methodDescription, executionTime, e);
         }
     }
 }
