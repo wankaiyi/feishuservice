@@ -1,7 +1,7 @@
 # 该镜像需要依赖的基础镜像
 FROM openjdk:17-jdk-alpine
 # 将当前目录下的jar包复制到docker容器的/目录下
-ADD ./feishuservice-1.0.jar /app.jar
+ADD ./target/feishuservice-1.0.jar /app.jar
 # 声明服务运行在9090端口
 EXPOSE 9090
 # 指定docker容器启动时运行jar包
