@@ -1,8 +1,8 @@
 # 该镜像需要依赖的基础镜像
 FROM openjdk:17-jdk-alpine
 
-ARG APOLLO_SECRET_KEY
-ENV APOLLO_SECRET_KEY=${APOLLO_SECRET_KEY}
+ARG APOLLO_ACCESS_KEY
+ENV APOLLO_ACCESS_KEY=${APOLLO_ACCESS_KEY}
 # 将当前目录下的jar包复制到docker容器的/目录下
 ADD ./target/feishuservice-1.0.jar /app.jar
 # 声明服务运行在9090端口
