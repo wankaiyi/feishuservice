@@ -16,7 +16,7 @@ apollo:
   meta: http://${HOST}:8080
   bootstrap:
     enabled: true
-    namespaces: application, redis, hefeng, openai, feishu
+    namespaces: application, redis, hefeng, openai, feishu, db
   cluster: default
   access-key:
     secret: ${APOLLO_ACCESS_KEY}
