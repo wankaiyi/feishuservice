@@ -35,7 +35,7 @@ public class ThreadPoolConfig {
             String errorText = doPrintThreadPoolConfig(consumeThreadPool);
             log.error("触发openai对话线程池拒绝策略 {}", errorText);
             // 告警
-            AlertUtils.sendThreadPoolRejectAlert(errorText);
+            AlertUtils.sendErrorAlert(errorText);
             // 交回给调用者，CallerRunsPolicy
             if (!consumeThreadPool.isShutdown()) {
                 runner.run();

@@ -16,7 +16,7 @@ public class AlertUtils {
             {
                 "msg_type": "text",
                 "content": {
-                    "text": "%s"
+                    "text": %s
                 }
             }
             """;
@@ -29,10 +29,11 @@ public class AlertUtils {
     }
 
     /**
-     * 线程池触发拒绝策略告警
+     * 异常告警
      */
-    public static void sendThreadPoolRejectAlert(String errorMsg) {
-        HttpUtils.postForm(ALERT_WEBHOOK_URL, String.format(ALERT_TEMPLATE, errorMsg), HEADERS_PARAMS);
+    public static String sendErrorAlert(String errorMsg) {
+        return HttpUtils.postForm(ALERT_WEBHOOK_URL, String.format(ALERT_TEMPLATE, JacksonUtils.serialize(errorMsg)), HEADERS_PARAMS);
+
     }
 
 }
