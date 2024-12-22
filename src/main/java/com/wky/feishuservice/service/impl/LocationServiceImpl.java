@@ -9,6 +9,7 @@ import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.service.LocationService;
 import groovy.lang.Tuple2;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationDO>
         implements LocationService {
 
@@ -31,6 +33,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationDO>
                 .likeRight(LocationDO::getLocationName, locationName));
         LocationDO location = locationDOS.get(0);
         WeatherResponseDTO weather = hefengWeatherClient.getWeather(location);
+        log.info("获取天气成功，location:{}, weather:{}", location, weather);
         return new Tuple2<>(location, weather);
 
     }
