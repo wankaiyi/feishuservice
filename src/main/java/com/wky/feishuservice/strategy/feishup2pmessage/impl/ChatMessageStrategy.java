@@ -17,9 +17,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.slf4j.MDC;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -48,8 +50,10 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
         RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
         queue.addAsync(contentText);
         RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
+        Map<String, String> MDCMap = MDC.getCopyOfContextMap();
         CompletableFuture.runAsync(() -> {
             try {
+                MDC.setContextMap(MDCMap);
                 // 获取锁，获取成功后有看门狗续命
                 if (lock.tryLock()) {
                     while (!queue.isEmpty()) {
@@ -71,6 +75,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                 if (lock.isHeldByCurrentThread()) {
                     lock.unlock();
                 }
+                MDC.clear();
             }
         }, openaiChatThreadPool);
     }
