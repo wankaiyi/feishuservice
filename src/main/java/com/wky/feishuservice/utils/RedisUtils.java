@@ -1,6 +1,7 @@
 package com.wky.feishuservice.utils;
 
 import lombok.RequiredArgsConstructor;
+import org.redisson.api.RAtomicLong;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,11 @@ public class RedisUtils {
     public void expire(String key, long expireTime, TimeUnit timeUnit) {
         RBucket<String> bucket = redissonClient.getBucket(key);
         bucket.expireAsync(Duration.ofMillis(timeUnit.toMillis(expireTime)));
+    }
+
+    public long increment(String key) {
+        RAtomicLong atomicLong = redissonClient.getAtomicLong(key);
+        return atomicLong.incrementAndGet();
     }
 
 }

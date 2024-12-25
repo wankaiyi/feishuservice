@@ -71,12 +71,13 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             String senderOpenId = senderId.getOpenId();
 
             // 对于同一个事件，只处理一次
-            if (Objects.nonNull(redisUtils.get("feishu:eventId:" + eventId))) {
+            String eventKey = "feishu:eventId:" + eventId;
+            if (redisUtils.increment(eventKey) != 1) {
                 log.info("事件重复，不处理，eventId: {}", eventId);
                 return;
+            } else {
+                redisUtils.expire(eventKey, 60 * 60 * 1000, TimeUnit.MILLISECONDS);
             }
-            //缓存event_id
-            redisUtils.set("feishu:eventId:" + eventId, eventId, 60 * 60 * 1000, TimeUnit.MILLISECONDS);
 
             // 私聊直接回复
             if (StringUtils.equals("p2p", message.getChatType())) {
