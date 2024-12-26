@@ -7,6 +7,7 @@ import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
+import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.bo.FeishuComboboxOptionBO;
 import com.wky.feishuservice.model.bo.FeishuDelayRenewCardBO;
@@ -17,6 +18,7 @@ import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.model.po.PromptDO;
+import com.wky.feishuservice.model.po.UserPromptDO;
 import com.wky.feishuservice.producer.FeishuRenewCardProducer;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -55,6 +57,7 @@ public class FeishuClient {
     private final RedisUtils redisUtils;
     private final PromptMapper promptMapper;
     private final FeishuRenewCardProducer feishuRenewCardProducer;
+    private final UserPromptMapper userPromptMapper;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
@@ -428,6 +431,7 @@ public class FeishuClient {
                                         "elements": [
                                             {
                                                 "tag": "select_static",
+                                                "initial_option": "{initial_option}",
                                                 "placeholder": {
                                                     "tag": "plain_text",
                                                     "content": "请选择"
@@ -457,11 +461,11 @@ public class FeishuClient {
                                 "confirm": {
                                     "title": {
                                         "tag": "plain_text",
-                                        "content": "1"
+                                        "content": ""
                                     },
                                     "text": {
                                         "tag": "plain_text",
-                                        "content": "2"
+                                        "content": "是否确认提交"
                                     }
                                 },
                                 "behaviors": [
@@ -490,8 +494,14 @@ public class FeishuClient {
                     }
                 }
                 """;
+        UserPromptDO userPromptDO = userPromptMapper.selectOne(new LambdaQueryWrapper<UserPromptDO>()
+                .eq(UserPromptDO::getOpenId, receiveId));
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
-        log.info("card: {}", card);
+        if (Objects.nonNull(userPromptDO)) {
+            card = card.replace("{initial_option}", userPromptDO.getPromptId().toString());
+        } else {
+            card = card.replace("\"initial_option\": \"{initial_option}\",", "");
+        }
         sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
 
     }
