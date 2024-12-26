@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -140,7 +139,13 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                     .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
                     .setContent("表单为空，请重新填写"));
         } else {
-            // 表单有值，设置提示词
+            // 表单有值，设置提示词，先校验表单
+            if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == userPromptSubmissionsDO.getSubmitted()){
+                response.setToast(new FeishuCallbackResponseDTO.Toast()
+                        .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
+                        .setContent("表单已提交，请勿重复提交"));
+                return;
+            }
             userPromptSubmissionsDO.setSubmitted(UserPromptSubmissionsDO.Status.SUBMITTED.getValue());
             userPromptSubmissionsMapper.updateById(userPromptSubmissionsDO);
             UserPromptDO userPromptDO = userPromptMapper.selectOne(new LambdaQueryWrapper<UserPromptDO>()
