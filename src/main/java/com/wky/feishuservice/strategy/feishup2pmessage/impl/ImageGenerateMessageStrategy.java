@@ -9,6 +9,7 @@ import com.wky.feishuservice.model.dto.ImageGenerateResponseDTO;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.Optional;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ImageGenerateMessageStrategy implements FeishuP2pMessageStrategy {
 
     private static final String PREFIX = FeishuP2pPrefix.IMAGE_GENERATE.getPrefix();
@@ -45,7 +47,11 @@ public class ImageGenerateMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, PREFIX);
+        boolean match = StringUtils.startsWith(contentText, PREFIX);
+        if (match) {
+            log.info("匹配到图片生成策略");
+        }
+        return match;
     }
 
 }

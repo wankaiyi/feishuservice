@@ -82,6 +82,10 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.isNoneBlank(contentText) && FeishuP2pPrefix.notInFeishuP2pPrefixes(contentText);
+        boolean match = StringUtils.isNoneBlank(contentText) && FeishuP2pPrefix.notInFeishuP2pPrefixes(contentText);
+        if (match) {
+            log.info("匹配到chatgpt聊天策略");
+        }
+        return match;
     }
 }

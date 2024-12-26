@@ -5,7 +5,10 @@ import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,9 +17,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PromptConfigStrategy implements FeishuP2pMessageStrategy {
 
     private final FeishuClient feishuClient;
+    private static final String PREFIX = "#配置";
 
 
     @Override
@@ -29,6 +34,10 @@ public class PromptConfigStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, "#配置");
+        boolean match = StringUtils.startsWith(contentText, PREFIX);
+        if (match) {
+            log.info("匹配到提示词配置策略");
+        }
+        return match;
     }
 }

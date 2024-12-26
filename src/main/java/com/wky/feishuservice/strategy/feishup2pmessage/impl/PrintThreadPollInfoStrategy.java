@@ -41,6 +41,10 @@ public class PrintThreadPollInfoStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, PREFIX);
+        boolean match = StringUtils.startsWith(contentText, PREFIX);
+        if (match) {
+            log.info("匹配到线程池快照查询策略");
+        }
+        return match;
     }
 }

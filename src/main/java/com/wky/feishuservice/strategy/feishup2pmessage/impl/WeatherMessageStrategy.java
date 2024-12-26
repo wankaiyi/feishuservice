@@ -10,6 +10,7 @@ import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import groovy.lang.Tuple2;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
 
     private final FeishuClient feishuClient;
@@ -39,7 +41,11 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, FeishuP2pPrefix.WEATHER.getPrefix());
+        boolean match = StringUtils.startsWith(contentText, FeishuP2pPrefix.WEATHER.getPrefix());
+        if (match) {
+            log.info("匹配到天气查询消息策略");
+        }
+        return match;
     }
 
 }

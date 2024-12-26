@@ -6,6 +6,7 @@ import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class RefreshMemoryMessageStrategy implements FeishuP2pMessageStrategy {
 
     private final ChatMsgCache chatMsgCache;
@@ -30,6 +32,10 @@ public class RefreshMemoryMessageStrategy implements FeishuP2pMessageStrategy {
 
     @Override
     public boolean isMatch(String contentText) {
-        return StringUtils.startsWith(contentText, FeishuP2pPrefix.REFRESH_MEMORY.getPrefix());
+        boolean match = StringUtils.startsWith(contentText, FeishuP2pPrefix.REFRESH_MEMORY.getPrefix());
+        if (match) {
+            log.info("匹配到刷新上下文策略");
+        }
+        return match;
     }
 }
