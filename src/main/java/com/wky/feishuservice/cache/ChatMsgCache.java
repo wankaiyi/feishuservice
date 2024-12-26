@@ -8,6 +8,7 @@ import org.redisson.api.RDeque;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +26,7 @@ public class ChatMsgCache {
 
     public List<ChatRequestDTO.Message> getMsgCache(String openId) {
         String key = getKey(openId);
-        return redissonClient.getDeque(key).stream().map(str -> JacksonUtils.deserialize(str.toString(), ChatRequestDTO.Message.class)).toList();
+        return new LinkedList<>(redissonClient.getDeque(key).stream().map(str -> JacksonUtils.deserialize(str.toString(), ChatRequestDTO.Message.class)).toList());
     }
 
     private String getKey(String openId) {
