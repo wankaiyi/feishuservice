@@ -2,16 +2,22 @@ package com.wky.feishuservice.client;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
+import com.wky.feishuservice.mapper.PromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
+import com.wky.feishuservice.model.bo.FeishuComboboxOptionBO;
+import com.wky.feishuservice.model.bo.FeishuDelayRenewCardBO;
 import com.wky.feishuservice.model.dto.DailyWeatherDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuSendUserMsgDTO;
 import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
+import com.wky.feishuservice.model.po.PromptDO;
+import com.wky.feishuservice.producer.FeishuRenewCardProducer;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
@@ -47,6 +53,8 @@ import static com.wky.feishuservice.constants.FeishuConstants.FEISHU_OPENAI_REDI
 public class FeishuClient {
 
     private final RedisUtils redisUtils;
+    private final PromptMapper promptMapper;
+    private final FeishuRenewCardProducer feishuRenewCardProducer;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
@@ -335,5 +343,155 @@ public class FeishuClient {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String formattedDate = now.format(formatter);
         return String.format(THREAD_POOL_INFO_CARD, formattedDate, JacksonUtils.serialize(threadPoolInfo));
+    }
+
+    public void delayRenewCard(String card, String token) {
+        String accessToken = getTenantAccessToken();
+        String body = """
+                {
+                    "token": "%s",
+                    "card": %s
+                }
+                """;
+        feishuRenewCardProducer.sendRenewCardMessage(new FeishuDelayRenewCardBO(String.format(body, token, card), accessToken),
+                1,
+                TimeUnit.SECONDS);
+    }
+
+    public void sendPromptConfigCard(String receiveId, String receiveType, String messageId) {
+        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>());
+        List<FeishuComboboxOptionBO> options = promptDOS.stream()
+                .map(promptDO -> new FeishuComboboxOptionBO(promptDO.getAct(), promptDO.getId().toString()))
+                .toList();
+        StringBuilder optionsStringBuilder = new StringBuilder("[");
+        for (int i = 0; i < options.size(); i++) {
+            FeishuComboboxOptionBO option = options.get(i);
+            optionsStringBuilder.append("{")
+                    .append("\"text\": { \"tag\": \"plain_text\", \"content\": \"")
+                    .append(option.getText())
+                    .append("\" },")
+                    .append("\"value\": \"")
+                    .append(option.getValue())
+                    .append("\" }");
+            if (i < options.size() - 1) {
+                optionsStringBuilder.append(",");
+            }
+        }
+        optionsStringBuilder.append("]");
+
+        String cardTemplate = """
+                {
+                    "schema": "2.0",
+                    "config": {
+                        "update_multi": true,
+                        "style": {
+                            "text_size": {
+                                "normal_v2": {
+                                    "default": "normal",
+                                    "pc": "normal",
+                                    "mobile": "heading"
+                                }
+                            }
+                        }
+                    },
+                    "body": {
+                        "direction": "horizontal",
+                        "horizontal_spacing": "8px",
+                        "vertical_spacing": "8px",
+                        "horizontal_align": "left",
+                        "vertical_align": "top",
+                        "padding": "12px 12px 12px 12px",
+                        "elements": [
+                            {
+                                "tag": "column_set",
+                                "horizontal_align": "left",
+                                "columns": [
+                                    {
+                                        "tag": "column",
+                                        "width": "weighted",
+                                        "elements": [
+                                            {
+                                                "tag": "markdown",
+                                                "content": "选择提示词",
+                                                "text_align": "left",
+                                                "text_size": "normal_v2"
+                                            }
+                                        ],
+                                        "vertical_spacing": "8px",
+                                        "horizontal_align": "left",
+                                        "vertical_align": "top",
+                                        "weight": 1
+                                    },
+                                    {
+                                        "tag": "column",
+                                        "width": "weighted",
+                                        "elements": [
+                                            {
+                                                "tag": "select_static",
+                                                "placeholder": {
+                                                    "tag": "plain_text",
+                                                    "content": "请选择"
+                                                },
+                                                "options": {OPTIONS},
+                                                "type": "default",
+                                                "width": "default"
+                                            }
+                                        ],
+                                        "vertical_spacing": "8px",
+                                        "horizontal_align": "left",
+                                        "vertical_align": "top",
+                                        "weight": 1
+                                    }
+                                ],
+                                "margin": "0px 0px 0px 0px"
+                            },
+                            {
+                                "tag": "button",
+                                "text": {
+                                    "tag": "plain_text",
+                                    "content": "提交"
+                                },
+                                "type": "primary",
+                                "width": "default",
+                                "size": "medium",
+                                "confirm": {
+                                    "title": {
+                                        "tag": "plain_text",
+                                        "content": "1"
+                                    },
+                                    "text": {
+                                        "tag": "plain_text",
+                                        "content": "2"
+                                    }
+                                },
+                                "behaviors": [
+                                    {
+                                        "type": "callback",
+                                        "value": {
+                                            "": ""
+                                        }
+                                    }
+                                ],
+                                "margin": "0px 0px 0px 0px"
+                            }
+                        ]
+                    },
+                    "header": {
+                        "title": {
+                            "tag": "plain_text",
+                            "content": "请设置您的常用提示词"
+                        },
+                        "subtitle": {
+                            "tag": "plain_text",
+                            "content": ""
+                        },
+                        "template": "wathet",
+                        "padding": "12px 12px 12px 12px"
+                    }
+                }
+                """;
+        String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
+        sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
+
     }
 }

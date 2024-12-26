@@ -521,5 +521,42 @@ public class HttpUtils {
         }
     }
     }
+
+    /**
+     * PATCH 请求
+     */
+    public static String patchJson(String url, String data, Map<String, String> headersParams) {
+        return doParseResponseBody(patchResponseBody(url, data, headersParams, JSON));
+    }
+
+    public static String patchJson(String url, String data, Map<String, String> headersParams, Map<String, String> requestParams) {
+        return doParseResponseBody(patchResponseBody(url, data, headersParams, requestParams, JSON));
+    }
+
+    /**
+     * 用于执行具体的 PATCH 请求并返回响应体
+     */
+    private static ResponseBody patchResponseBody(String url, String data, Map<String, String> headersParams, MediaType mediaType) {
+        HttpUrl.Builder httpUrlBuild = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
+        Request.Builder builder = new Request.Builder();
+        if (ObjectUtils.isNotEmpty(headersParams)) {
+            builder.headers(setHeaders(headersParams));
+        }
+        builder.patch(RequestBody.create(mediaType, data));
+        builder.url(httpUrlBuild.build());
+        return execute(builder);
+    }
+
+    private static ResponseBody patchResponseBody(String url, String data, Map<String, String> headersParams, Map<String, String> requestParams, MediaType mediaType) {
+        HttpUrl.Builder httpUrlBuild = Objects.requireNonNull(HttpUrl.parse(url)).newBuilder();
+        Optional.ofNullable(requestParams).orElse(Collections.emptyMap()).forEach(httpUrlBuild::addQueryParameter);
+        Request.Builder builder = new Request.Builder();
+        if (ObjectUtils.isNotEmpty(headersParams)) {
+            builder.headers(setHeaders(headersParams));
+        }
+        builder.patch(RequestBody.create(mediaType, data));
+        builder.url(httpUrlBuild.build());
+        return execute(builder);
+    }
 }
 

@@ -1,6 +1,8 @@
 package com.wky.feishuservice.service;
 
 import com.alibaba.fastjson2.JSONObject;
+import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
+import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
 
 /**
@@ -9,4 +11,6 @@ import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
  */
 public interface FeishuMessageService {
     JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO);
+
+    FeishuCallbackResponseDTO processFeishuCallback(FeishuCallbackRequestDTO feishuCallbackRequestDTO);
 }

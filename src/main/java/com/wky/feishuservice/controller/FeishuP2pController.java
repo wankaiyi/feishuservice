@@ -3,6 +3,8 @@ package com.wky.feishuservice.controller;
 import com.alibaba.fastjson2.JSONObject;
 import com.wky.feishuservice.annotation.Log;
 import com.wky.feishuservice.annotation.RateLimiter;
+import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
+import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,13 @@ public class FeishuP2pController {
     @RateLimiter
     @PostMapping("/chat")
     public JSONObject postFeishuNotice(@RequestBody FeishuP2pChatDTO feishuP2pChatDTO) {
-        return feishuMessageService.processFeishuNotice(feishuP2pChatDTO);
+         return feishuMessageService.processFeishuNotice(feishuP2pChatDTO);
+    }
+
+    @Log
+    @PostMapping("/callback")
+    public FeishuCallbackResponseDTO callback(@RequestBody FeishuCallbackRequestDTO feishuCallbackRequestDTO) {
+       return feishuMessageService.processFeishuCallback(feishuCallbackRequestDTO);
     }
 
 }
