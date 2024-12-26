@@ -491,6 +491,7 @@ public class FeishuClient {
                 }
                 """;
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
+        log.info("card: {}", card);
         sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
 
     }
