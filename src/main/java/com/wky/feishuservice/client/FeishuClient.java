@@ -18,7 +18,6 @@ import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.model.po.PromptDO;
-import com.wky.feishuservice.model.po.UserPromptDO;
 import com.wky.feishuservice.producer.FeishuRenewCardProducer;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -57,7 +56,6 @@ public class FeishuClient {
     private final RedisUtils redisUtils;
     private final PromptMapper promptMapper;
     private final FeishuRenewCardProducer feishuRenewCardProducer;
-    private final UserPromptMapper userPromptMapper;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
@@ -431,7 +429,6 @@ public class FeishuClient {
                                         "elements": [
                                             {
                                                 "tag": "select_static",
-                                                "initial_option": "{initial_option}",
                                                 "placeholder": {
                                                     "tag": "plain_text",
                                                     "content": "请选择"
@@ -494,14 +491,7 @@ public class FeishuClient {
                     }
                 }
                 """;
-        UserPromptDO userPromptDO = userPromptMapper.selectOne(new LambdaQueryWrapper<UserPromptDO>()
-                .eq(UserPromptDO::getOpenId, receiveId));
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
-        if (Objects.nonNull(userPromptDO)) {
-            card = card.replace("{initial_option}", userPromptDO.getPromptId().toString());
-        } else {
-            card = card.replace("\"initial_option\": \"{initial_option}\",", "");
-        }
         sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
 
     }
