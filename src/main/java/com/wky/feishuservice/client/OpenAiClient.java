@@ -5,6 +5,7 @@ import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.config.OpenAiConfig;
 import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.exceptions.OpenAiException;
+import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.dto.ChatRequestDTO;
 import com.wky.feishuservice.model.dto.ChatResponseDTO;
@@ -17,6 +18,7 @@ import com.wky.feishuservice.utils.RedisUtils;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -45,6 +47,7 @@ public class OpenAiClient {
     private static final Map<String, Map<String, String>> HEADER_PARAMS_MAPS = new HashMap<>();
     private final RedisUtils redisUtils;
     private final OpenAiConfig openAiConfig;
+    private final UserPromptMapper userPromptMapper;
 
     @PostConstruct
     public void init() {
@@ -62,6 +65,8 @@ public class OpenAiClient {
     public ChatResponseBO chat(String openId, String text) {
         String apiKey = apiKeySelector.selectApiKey();
         List<ChatRequestDTO.Message> messages = addMessageToCache(openId, text);
+        // 拼接提示词
+        addPromptIfNeeded(messages, openId);
 
         ChatResponseDTO response = processChatgptRequest(messages, apiKey);
         ChatResponseDTO.ChatError error;
@@ -81,6 +86,20 @@ public class OpenAiClient {
                 .setModel(response.getModel())
                 .setTotalTokens(response.getUsage().getTotalTokens())
                 .setPrice(price);
+    }
+
+    private void addPromptIfNeeded(List<ChatRequestDTO.Message> messages, String openId) {
+        String prompt = userPromptMapper.selectUserPrompt(openId);
+        if (Strings.isNotBlank(prompt)) {
+            messages.add(0, new ChatRequestDTO.Message("system", prompt));
+        }
+        messages.addAll(
+                1,
+                List.of(
+                new ChatRequestDTO.Message("user", "使用中文回答所有问题"),
+                new ChatRequestDTO.Message("assistant", "好的，了解")
+                )
+        );
     }
 
     private void cacheMsg(String openId, String resContent) {
