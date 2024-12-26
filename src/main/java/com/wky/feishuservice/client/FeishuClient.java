@@ -457,7 +457,7 @@ public class FeishuClient {
                                 "confirm": {
                                     "title": {
                                         "tag": "plain_text",
-                                        "content": ""
+                                        "content": "1"
                                     },
                                     "text": {
                                         "tag": "plain_text",
