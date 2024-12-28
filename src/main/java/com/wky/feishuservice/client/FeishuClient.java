@@ -497,7 +497,7 @@ public class FeishuClient {
     }
 
     public void sendRefreshSuccessMsg(String receiveId, String receiveType, String messageId) {
-        sendFeishuP2pMsg("机器人上下文已重置", receiveId, receiveType, "text", messageId);
+        sendFeishuP2pMsg(JacksonUtils.serialize("机器人上下文已重置"), receiveId, receiveType, "text", messageId);
 
     }
 }
