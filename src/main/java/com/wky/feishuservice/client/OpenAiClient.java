@@ -131,11 +131,12 @@ public class OpenAiClient {
     private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey) {
         ChatRequestDTO chatRequestDTO = new ChatRequestDTO(GPT_4_O_MODEL, messages);
         String data = JacksonUtils.serialize(chatRequestDTO);
+        log.info("请求OpenAI接口，请求体：{}", data);
         // 接口超时会导致返回null
         String result = HttpUtils.postForm(OpenAiConstants.CHAT_URL, data, HEADER_PARAMS_MAPS.get(apiKey), new HashMap<>() {{
             put("model", GPT_4_O_MODEL);
         }});
-        log.info("chatgpt result: {}", result);
+        log.info("OpenAI接口返回结果: {}", result);
         if (Objects.isNull(result)) {
             throw new OpenAiException("openai接口异常，请查看日志");
         }
