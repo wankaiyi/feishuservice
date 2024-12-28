@@ -1,6 +1,7 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.cache.ChatMsgCache;
+import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
@@ -22,12 +23,15 @@ import org.springframework.stereotype.Component;
 public class RefreshMemoryMessageStrategy implements FeishuP2pMessageStrategy {
 
     private final ChatMsgCache chatMsgCache;
+    private final FeishuClient feishuClient;
 
     @Override
     public void handleMessage(String contentText, String messageId) {
         UserInfo userInfo = UserInfoContext.getUserInfo();
+        String receiveType = userInfo.getReceiveType();
         String receiveId = userInfo.getReceiveId();
         chatMsgCache.refreshCache(receiveId);
+        feishuClient.sendRefreshSuccessMsg(receiveId, receiveType, messageId);
     }
 
     @Override

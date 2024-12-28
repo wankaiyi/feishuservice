@@ -7,7 +7,6 @@ import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
-import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.bo.FeishuComboboxOptionBO;
 import com.wky.feishuservice.model.bo.FeishuDelayRenewCardBO;
@@ -360,7 +359,8 @@ public class FeishuClient {
     }
 
     public void sendPromptConfigCard(String receiveId, String receiveType, String messageId) {
-        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>());
+        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>()
+                .select(PromptDO::getId, PromptDO::getAct));
         List<FeishuComboboxOptionBO> options = promptDOS.stream()
                 .map(promptDO -> new FeishuComboboxOptionBO(promptDO.getAct(), promptDO.getId().toString()))
                 .toList();
@@ -493,6 +493,11 @@ public class FeishuClient {
                 """;
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
         sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
+
+    }
+
+    public void sendRefreshSuccessMsg(String receiveId, String receiveType, String messageId) {
+        sendFeishuP2pMsg("机器人上下文已重置", receiveId, receiveType, "text", messageId);
 
     }
 }
