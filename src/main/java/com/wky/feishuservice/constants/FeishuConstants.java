@@ -24,13 +24,13 @@ public class FeishuConstants {
 
     public static final String FEISHU_DELAY_UPDATE_CARD_URL = "https://open.feishu.cn/open-apis/interactive/v1/card/update";
 
-    public static final String FEISHU_PROMPT_SUBMIT_LOCK_KEY = "feishu:prompt:submit:lock:%s";
+    public static final String FEISHU_PROMPT_OPTION_LOCK_KEY = "feishu:prompt:option:lock:%s";
 
     public static String getFeishuEventKey(String eventId) {
         return String.format(FEISHU_EVENT_KEY, eventId);
     }
 
-    public static String getFeishuPromptSubmitLockKey(String userId) {
-        return String.format(FEISHU_PROMPT_SUBMIT_LOCK_KEY, userId);
+    public static String getFeishuPromptOptionLockKey(String userId) {
+        return String.format(FEISHU_PROMPT_OPTION_LOCK_KEY, userId);
     }
 }

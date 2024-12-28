@@ -101,31 +101,32 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
         String openId = feishuCallbackRequestDTO.getEvent().getOperator().getOpenId();
         String openMessageId = feishuCallbackRequestDTO.getEvent().getContext().getOpenMessageId();
 
-        if (StringUtils.equals(FeishuCallbackActionTag.SELECT_STATIC.getValue(), actionTag)) {
-            handleSelectStatic(openId,
-                    feishuCallbackRequestDTO.getEvent().getAction().getOption(),
-                    openMessageId);
-        } else if (StringUtils.equals(FeishuCallbackActionTag.BUTTON.getValue(), actionTag)) {
-            RLock lock = redissonClient.getLock(FeishuConstants.getFeishuPromptSubmitLockKey(openId));
-            try {
-                if (lock.tryLock()) {
+        RLock lock = redissonClient.getLock(FeishuConstants.getFeishuPromptOptionLockKey(openId));
+        try {
+            if (lock.tryLock()) {
+                if (StringUtils.equals(FeishuCallbackActionTag.SELECT_STATIC.getValue(), actionTag)) {
+                    handleSelectStatic(openId,
+                            feishuCallbackRequestDTO.getEvent().getAction().getOption(),
+                            openMessageId,
+                            response);
+                } else if (StringUtils.equals(FeishuCallbackActionTag.BUTTON.getValue(), actionTag)) {
                     FeishuMessageServiceImpl self = SpringContextUtil.getBean(this.getClass());
                     self.handleClickButton(openId, openMessageId, response, feishuCallbackRequestDTO.getEvent().getToken());
                 } else {
+                    log.info("未知事件，eventId: {}, actionTag: {}", eventId, actionTag);
                     response.setToast(new FeishuCallbackResponseDTO.Toast()
-                            .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
-                            .setContent("请求处理中，请稍后再试"));
+                            .setType(FeishuCallbackResponseDTO.Toast.ToastType.INFO.getValue())
+                            .setContent("未知事件，请联系管理员处理"));
                 }
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
+            } else {
+                response.setToast(new FeishuCallbackResponseDTO.Toast()
+                        .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
+                        .setContent("请求处理中，请稍后再试"));
             }
-        } else {
-            log.info("未知事件，eventId: {}, actionTag: {}", eventId, actionTag);
-            response.setToast(new FeishuCallbackResponseDTO.Toast()
-                    .setType(FeishuCallbackResponseDTO.Toast.ToastType.INFO.getValue())
-                    .setContent("未知事件，请联系管理员处理"));
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
         }
     }
 
@@ -140,7 +141,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                     .setContent("表单为空，请重新填写"));
         } else {
             // 表单有值，设置提示词，先校验表单
-            if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == userPromptSubmissionsDO.getSubmitted()){
+            if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == userPromptSubmissionsDO.getSubmitted()) {
                 response.setToast(new FeishuCallbackResponseDTO.Toast()
                         .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
                         .setContent("表单已提交，请勿重复提交"));
@@ -283,14 +284,28 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
         feishuClient.delayRenewCard(newCard, token);
     }
 
-    private void handleSelectStatic(String openId, String option, String openMessageId) {
+    private void handleSelectStatic(String openId, String option, String openMessageId, FeishuCallbackResponseDTO response) {
         // 保存用户选择
-        UserPromptSubmissionsDO userPromptSubmissionsDO = new UserPromptSubmissionsDO();
-        userPromptSubmissionsDO.setOpenId(openId);
-        userPromptSubmissionsDO.setMessageId(openMessageId);
+        UserPromptSubmissionsDO userPromptSubmissionsDO = userPromptSubmissionsMapper.selectOne(new LambdaQueryWrapper<UserPromptSubmissionsDO>()
+                .eq(UserPromptSubmissionsDO::getMessageId, openMessageId));
         long promptId = Long.parseLong(option);
-        userPromptSubmissionsDO.setPromptId(promptId);
-        userPromptSubmissionsMapper.insert(userPromptSubmissionsDO);
+        if (Objects.nonNull(userPromptSubmissionsDO)) {
+            Short submitted = userPromptSubmissionsDO.getSubmitted();
+            if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == submitted) {
+                // 表单已提交
+                response.setToast(new FeishuCallbackResponseDTO.Toast()
+                        .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
+                        .setContent("表单已提交，请勿重复提交"));
+                return;
+            }
+            userPromptSubmissionsDO.setPromptId(promptId);
+        } else {
+            userPromptSubmissionsDO = new UserPromptSubmissionsDO();
+            userPromptSubmissionsDO.setOpenId(openId);
+            userPromptSubmissionsDO.setMessageId(openMessageId);
+            userPromptSubmissionsDO.setPromptId(promptId);
+            userPromptSubmissionsMapper.insert(userPromptSubmissionsDO);
+        }
     }
 
     public void handleMessage(FeishuP2pChatDTO feishuP2pChatDTO) {
