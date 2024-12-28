@@ -88,7 +88,7 @@ public class FeishuClient {
         String result = HttpUtils.postForm(url, data, headerParams, requestParams);
         FeishuP2pResponseDTO feishuResponse = JacksonUtils.deserialize(result, FeishuP2pResponseDTO.class);
         if (!Objects.equals(feishuResponse.getCode(), 0) || Objects.nonNull(feishuResponse.getError())) {
-            log.error("飞书机器人发送消息失败，message: {}, error: {}", feishuResponse.getMsg(), feishuResponse.getError());
+            log.error("飞书机器人发送消息失败，请求体: {}, message: {}, error: {}", data, feishuResponse.getMsg(), feishuResponse.getError());
             throw new FeishuP2pException(feishuResponse.getMsg() + "，" + feishuResponse.getError(), receiveId, headerParams, requestParams);
         }
         log.info("飞书机器人发送消息，result: {}", result);
