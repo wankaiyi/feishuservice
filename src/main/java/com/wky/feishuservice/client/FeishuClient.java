@@ -83,7 +83,6 @@ public class FeishuClient {
             url = String.format(FeishuConstants.FEISHU_REPLY_USER_URL, messageId);
             feishuSendUserMsgDTO.setReceiveId(null);
         } else {
-            feishuSendUserMsgDTO.setContent(getContent(content));
             url = FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL;
         }
         String result = HttpUtils.postForm(url, data, headerParams, requestParams);
@@ -498,7 +497,7 @@ public class FeishuClient {
     }
 
     public void sendRefreshSuccessMsg(String receiveId, String receiveType, String messageId) {
-        sendFeishuP2pMsg("机器人上下文已重置", receiveId, receiveType, "text", messageId);
+        sendFeishuP2pMsg(getContent("机器人上下文已重置"), receiveId, receiveType, "text", messageId);
     }
 
 }
