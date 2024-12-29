@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -117,11 +118,14 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                             response);
                 } else if (StringUtils.equals(FeishuCallbackActionTag.BUTTON.getValue(), actionTag)) {
                     FeishuMessageServiceImpl self = SpringContextUtil.getBean(this.getClass());
+                    FeishuCallbackRequestDTO.Event.Action action = feishuCallbackRequestDTO.getEvent().getAction();
+                    Map<String, String> value = action.getValue();
                     self.handleClickButton(
                             openMessageId,
                             response,
                             feishuCallbackRequestDTO.getEvent().getToken(),
-                            FeishuCardButtonType.valueOf(feishuCallbackRequestDTO.getEvent().getAction().getValue().get("type"))
+                            FeishuCardButtonType.valueOf(feishuCallbackRequestDTO.getEvent().getAction().getValue().get("type")),
+                            value.get("question")
                     );
                 } else {
                     log.info("未知事件，eventId: {}, actionTag: {}", eventId, actionTag);
@@ -142,8 +146,8 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void handleClickButton(String openMessageId, FeishuCallbackResponseDTO response, String token, FeishuCardButtonType type) {
-        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token);
+    public void handleClickButton(String openMessageId, FeishuCallbackResponseDTO response, String token, FeishuCardButtonType type, String question) {
+        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token,question);
     }
 
     @Override

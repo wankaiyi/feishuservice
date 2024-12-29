@@ -63,7 +63,6 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                             feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
                             ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,text);
                             feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
-                            System.out.println(predictNextQuestion);
                         } catch (OpenAiException e) {
                             log.error("获取chatgpt结果失败 error:", e);
                             feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));

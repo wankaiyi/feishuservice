@@ -537,7 +537,7 @@ public class FeishuClient {
                 "type":"template",
                 "data":{
                     "template_id":"AAqS7rtKi7JKR",
-                    "template_version_name":"1.0.0",
+                    "template_version_name":"1.0.1",
                     "template_variable":%s
                 }
             }
