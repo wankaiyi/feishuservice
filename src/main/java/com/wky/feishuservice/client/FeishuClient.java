@@ -4,6 +4,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.annotation.TimedExecution;
+import com.wky.feishuservice.config.FeishuConfig;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
@@ -58,6 +59,7 @@ public class FeishuClient {
     private final PromptMapper promptMapper;
     private final FeishuRenewCardProducer feishuRenewCardProducer;
     private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
+    private final FeishuConfig feishuConfig;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
@@ -102,8 +104,8 @@ public class FeishuClient {
         String accessToken = redisUtils.get(FEISHU_OPENAI_REDIS_KEY);
         if (Objects.isNull(accessToken)) {
             String data = JacksonUtils.serialize(new HashMap<>() {{
-                put("app_id", FeishuConstants.FEISHU_OPENAI_APP_ID);
-                put("app_secret", FeishuConstants.FEISHU_OPENAI_APP_SECRET);
+                put("app_id", feishuConfig.getFeishuOpenaiAppId());
+                put("app_secret", feishuConfig.getFeishuOpenaiAppSecret());
             }});
             String result = HttpUtils.postForm(FeishuConstants.FEISHU_GET_TENANT_ACCESS_TOKEN_URL, data);
             JSONObject jsonObject = JSONObject.parseObject(result);

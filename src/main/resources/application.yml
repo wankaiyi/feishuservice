@@ -2,9 +2,9 @@ server:
   port: 9090
   servlet:
     context-path: /feishuservice
-
-logging:
-  config: classpath:logback-prod.xml
+spring:
+  profiles:
+    active: dev
 
 openai:
   apikey:

@@ -15,4 +15,4 @@ ADD ./target/feishuservice-1.0.jar /app.jar
 # 声明服务运行在9090端口
 EXPOSE 9090
 # 指定docker容器启动时运行jar包
-ENTRYPOINT ["java", "-Xms128m", "-Xmx512m", "-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8", "-Duser.timezone=Asia/Shanghai", "-Dserver.shutdown=graceful", "-Dspring.lifecycle.timeout-per-shutdown-phase=10s", "-jar","/app.jar"]
+ENTRYPOINT ["java", "-Xms128m", "-Xmx512m", "-Dfile.encoding=UTF-8", "-Dsun.jnu.encoding=UTF-8", "-Duser.timezone=Asia/Shanghai", "-Dserver.shutdown=graceful", "-Dspring.lifecycle.timeout-per-shutdown-phase=10s", "-jar","/app.jar", "--spring.profiles.active=prod"]

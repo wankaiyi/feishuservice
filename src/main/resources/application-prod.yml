@@ -1,0 +1,8 @@
+feishu:
+  openai:
+    app:
+      id: cli_a7fbac1977651013
+      secret: xnJQNdooaYS2yijbXDAINgMUc2u2j0vI
+
+logging:
+  config: classpath:logback-prod.xml
