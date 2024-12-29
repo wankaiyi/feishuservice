@@ -83,7 +83,7 @@ public class FeishuCallbackRequestDTO {
 
             private String tag;
             private String option;
-            private Map<String, FeishuCardButtonType> value;
+            private Map<String, String> value;
 
         }
 

@@ -121,7 +121,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                             openMessageId,
                             response,
                             feishuCallbackRequestDTO.getEvent().getToken(),
-                            feishuCallbackRequestDTO.getEvent().getAction().getValue().get("type")
+                            FeishuCardButtonType.valueOf(feishuCallbackRequestDTO.getEvent().getAction().getValue().get("type"))
                     );
                 } else {
                     log.info("未知事件，eventId: {}, actionTag: {}", eventId, actionTag);
