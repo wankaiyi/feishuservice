@@ -37,6 +37,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -365,8 +366,7 @@ public class FeishuClient {
     }
 
     public void sendPromptConfigCard(String receiveId, String receiveType, String messageId) {
-        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>()
-                .select(PromptDO::getId, PromptDO::getAct));
+        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>());
         List<FeishuComboboxOptionBO> options = promptDOS.stream()
                 .map(promptDO -> new FeishuComboboxOptionBO(promptDO.getAct(), promptDO.getId().toString()))
                 .toList();
@@ -507,4 +507,39 @@ public class FeishuClient {
         sendFeishuP2pMsg(getContent("机器人上下文已重置"), receiveId, receiveType, "text", messageId);
     }
 
+    //
+    public void sendP2PPredictQuestion(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
+        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        self.sendFeishuP2pMsg(PredictQuestionContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
+    }
+
+    public String PredictQuestionContent(ChatResponseBO chatResponseBO) {
+        String content = chatResponseBO.getContent();
+        String model = chatResponseBO.getModel();
+        Integer totalTokens = chatResponseBO.getTotalTokens();
+        BigDecimal price = chatResponseBO.getPrice();
+        if (content==null){
+            return "";
+        }
+        String[] split = content.split(" ");
+        List<Map<String, Object>> questions = Arrays.stream(split).map(question -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("question", question);
+            return map;
+        }).toList();
+        Map<String,Object> map = new HashMap<>();
+        map.put("questions", questions);
+        String format = String.format(predictQuestionCard, JacksonUtils.serialize(map), model, totalTokens, price);
+        return  format;
+    }
+    private String predictQuestionCard= """
+            {
+                "type":"template",
+                "data":{
+                    "template_id":"AAqS7rtKi7JKR",
+                    "template_version_name":"1.0.0",
+                    "template_variable":%s
+                }
+            }
+            """;
 }
