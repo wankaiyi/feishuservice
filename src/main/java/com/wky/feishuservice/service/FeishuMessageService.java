@@ -13,4 +13,6 @@ public interface FeishuMessageService {
     JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO);
 
     FeishuCallbackResponseDTO processFeishuCallback(FeishuCallbackRequestDTO feishuCallbackRequestDTO);
+
+    void delayRenewCardAsync(Long promptId, String token);
 }

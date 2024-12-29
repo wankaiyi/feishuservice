@@ -475,7 +475,7 @@ public class FeishuClient {
                                     {
                                         "type": "callback",
                                         "value": {
-                                            "": ""
+                                            "type": "PROMPT_CONFIG_SUBMIT"
                                         }
                                     }
                                 ],

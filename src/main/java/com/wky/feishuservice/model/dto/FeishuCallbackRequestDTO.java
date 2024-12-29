@@ -3,9 +3,12 @@ package com.wky.feishuservice.model.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Map;
 
 /**
  * @author wky
@@ -80,6 +83,7 @@ public class FeishuCallbackRequestDTO {
 
             private String tag;
             private String option;
+            private Map<String, FeishuCardButtonType> value;
 
         }
 

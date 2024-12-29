@@ -5,19 +5,19 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.enumurations.FeishuCallbackActionTag;
+import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
-import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
 import com.wky.feishuservice.model.po.PromptDO;
-import com.wky.feishuservice.model.po.UserPromptDO;
 import com.wky.feishuservice.model.po.UserPromptSubmissionsDO;
 import com.wky.feishuservice.service.FeishuMessageService;
+import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategyFactory;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategyFactory;
 import com.wky.feishuservice.utils.RedisUtils;
@@ -47,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     private final RedisUtils redisUtils;
-    private final UserPromptMapper userPromptMapper;
     private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
     private final RedissonClient redissonClient;
     private final PromptMapper promptMapper;
@@ -74,7 +73,14 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             return response;
         }
         // 处理回调消息
-        handleCallback(feishuCallbackRequestDTO, response);
+        try {
+            String openId = feishuCallbackRequestDTO.getEvent().getOperator().getOpenId();
+            UserInfoContext.setUserInfo(new UserInfo()
+                    .setReceiveId(openId));
+            handleCallback(feishuCallbackRequestDTO, response);
+        } finally {
+            UserInfoContext.removeUserInfo();
+        }
         return response;
     }
 
@@ -98,7 +104,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             redisUtils.expire(eventKey, 60 * 60 * 1000, TimeUnit.MILLISECONDS);
         }
         String actionTag = feishuCallbackRequestDTO.getEvent().getAction().getTag();
-        String openId = feishuCallbackRequestDTO.getEvent().getOperator().getOpenId();
+        String openId = UserInfoContext.getUserInfo().getReceiveId();
         String openMessageId = feishuCallbackRequestDTO.getEvent().getContext().getOpenMessageId();
 
         RLock lock = redissonClient.getLock(FeishuConstants.getFeishuPromptOptionLockKey(openId));
@@ -111,7 +117,12 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                             response);
                 } else if (StringUtils.equals(FeishuCallbackActionTag.BUTTON.getValue(), actionTag)) {
                     FeishuMessageServiceImpl self = SpringContextUtil.getBean(this.getClass());
-                    self.handleClickButton(openId, openMessageId, response, feishuCallbackRequestDTO.getEvent().getToken());
+                    self.handleClickButton(
+                            openMessageId,
+                            response,
+                            feishuCallbackRequestDTO.getEvent().getToken(),
+                            feishuCallbackRequestDTO.getEvent().getAction().getValue().get("type")
+                    );
                 } else {
                     log.info("未知事件，eventId: {}, actionTag: {}", eventId, actionTag);
                     response.setToast(new FeishuCallbackResponseDTO.Toast()
@@ -131,41 +142,12 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void handleClickButton(String openId, String openMessageId, FeishuCallbackResponseDTO response, String token) {
-        UserPromptSubmissionsDO userPromptSubmissionsDO = userPromptSubmissionsMapper.selectOne(new LambdaQueryWrapper<UserPromptSubmissionsDO>()
-                .eq(UserPromptSubmissionsDO::getMessageId, openMessageId));
-        if (Objects.isNull(userPromptSubmissionsDO)) {
-            response.setToast(new FeishuCallbackResponseDTO.Toast()
-                    .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
-                    .setContent("表单不存在，请联系管理员处理"));
-        } else {
-            // 校验表单状态
-            if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == userPromptSubmissionsDO.getSubmitted()) {
-                response.setToast(new FeishuCallbackResponseDTO.Toast()
-                        .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
-                        .setContent("表单已提交，请勿重复提交"));
-                return;
-            }
-            userPromptSubmissionsDO.setSubmitted(UserPromptSubmissionsDO.Status.SUBMITTED.getValue());
-            userPromptSubmissionsMapper.updateById(userPromptSubmissionsDO);
-            UserPromptDO userPromptDO = userPromptMapper.selectOne(new LambdaQueryWrapper<UserPromptDO>()
-                    .eq(UserPromptDO::getOpenId, openId));
-            if (Objects.isNull(userPromptDO)) {
-                userPromptMapper.insert(new UserPromptDO()
-                        .setOpenId(openId)
-                        .setPromptId(userPromptSubmissionsDO.getPromptId()));
-            } else {
-                userPromptDO.setPromptId(userPromptSubmissionsDO.getPromptId());
-                userPromptMapper.updateById(userPromptDO);
-            }
-            response.setToast(new FeishuCallbackResponseDTO.Toast()
-                    .setType(FeishuCallbackResponseDTO.Toast.ToastType.SUCCESS.getValue())
-                    .setContent("提交成功！"));
-            delayRenewCardAsync(userPromptSubmissionsDO.getPromptId(), token);
-        }
+    public void handleClickButton(String openMessageId, FeishuCallbackResponseDTO response, String token, FeishuCardButtonType type) {
+        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token);
     }
 
-    private void delayRenewCardAsync(Long promptId, String token) {
+    @Override
+    public void delayRenewCardAsync(Long promptId, String token) {
         PromptDO promptDO = promptMapper.selectById(promptId);
         String newCardTemplate = """
                 {
@@ -303,6 +285,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                 return;
             }
             userPromptSubmissionsDO.setPromptId(promptId);
+            userPromptSubmissionsMapper.updateById(userPromptSubmissionsDO);
         } else {
             userPromptSubmissionsDO = new UserPromptSubmissionsDO();
             userPromptSubmissionsDO.setOpenId(openId);
