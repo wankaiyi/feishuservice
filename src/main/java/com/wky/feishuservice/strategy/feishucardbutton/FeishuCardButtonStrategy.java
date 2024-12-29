@@ -9,7 +9,7 @@ import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
  */
 public interface FeishuCardButtonStrategy {
 
-    void handle(String openMessageId, FeishuCallbackResponseDTO response, String token);
+    void handle(String openMessageId, FeishuCallbackResponseDTO response, String token, String question);
 
     boolean isMatch(FeishuCardButtonType type);
 }

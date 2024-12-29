@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 处理聊天消息策略
@@ -59,8 +60,25 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                     while (!queue.isEmpty()) {
                         String text = queue.take();
                         try {
-                            ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
-                            feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
+
+                            CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> {
+                                ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
+                                return chatResponseBO;
+                            }, openaiChatThreadPool);
+                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
+                                ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,text);
+                                return predictNextQuestion;
+                            }, openaiChatThreadPool);
+                            CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
+                                try {
+                                    ChatResponseBO chatResponseBO = aiTask.get();
+                                    feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
+                                    ChatResponseBO predictNextQuestion = questionTask.get();
+                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
+                                } catch (InterruptedException | ExecutionException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }).join();
                         } catch (OpenAiException e) {
                             log.error("获取chatgpt结果失败 error:", e);
                             feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));

@@ -96,8 +96,8 @@ public class OpenAiClient {
         messages.addAll(
                 1,
                 List.of(
-                new ChatRequestDTO.Message("user", "使用中文回答所有问题"),
-                new ChatRequestDTO.Message("assistant", "好的，了解")
+                        new ChatRequestDTO.Message("user", "使用中文回答所有问题"),
+                        new ChatRequestDTO.Message("assistant", "好的，了解")
                 )
         );
     }
@@ -181,5 +181,32 @@ public class OpenAiClient {
         );
         return JacksonUtils.deserialize(result, ImageGenerateResponseDTO.class);
     }
+    @TimedExecution(methodDescription = "根据用户问题提示下一步用户可能问出的问题")
+    public ChatResponseBO getPredictNextQuestion(String openId, String question) {
+        String apiKey = apiKeySelector.selectApiKey();
+        List<ChatRequestDTO.Message> messages = chatMsgCache.getMsgCache(openId);
+        // 拼接提示词
+        addPromptIfNeeded(messages, openId);
+        ChatResponseDTO response = processChatgptRequest(
+                List.of(new ChatRequestDTO.Message("system",OpenAiConstants.PREDICT_QUESTION_PROMPT),
+                        new ChatRequestDTO.Message("user",JacksonUtils.serialize(messages)+"根据这个上下文预测用户下一个问题"))
+                , apiKey);
+        ChatResponseDTO.ChatError error;
+        if (Objects.nonNull(error = response.getError())) {
+            throw new OpenAiException(String.format("apikey: %s，请求发生错误：%s", desensitizeString(apiKey), error.getMessage()));
+        }
 
+        String resContent = response.getChoices()[0].getMessageResp().getContent();
+
+        cacheMsg(openId, resContent);
+
+        BigDecimal price = getPrice(response.getUsage().getPromptTokens(), response.getUsage().getCompletionTokens());
+        updateBalance(price, apiKey);
+
+        return new ChatResponseBO()
+                .setContent(resContent)
+                .setModel(response.getModel())
+                .setTotalTokens(response.getUsage().getTotalTokens())
+                .setPrice(price);
+    }
 }

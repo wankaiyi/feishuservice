@@ -28,7 +28,7 @@ public class PromptConfigSubmitStrategy implements FeishuCardButtonStrategy {
     private final FeishuMessageService feishuMessageService;
 
     @Override
-    public void handle(String openMessageId, FeishuCallbackResponseDTO response, String token) {
+    public void handle(String openMessageId, FeishuCallbackResponseDTO response, String token, String question) {
         String openId = UserInfoContext.getUserInfo().getReceiveId();
         UserPromptSubmissionsDO userPromptSubmissionsDO = userPromptSubmissionsMapper.selectOne(new LambdaQueryWrapper<UserPromptSubmissionsDO>()
                 .eq(UserPromptSubmissionsDO::getMessageId, openMessageId));
