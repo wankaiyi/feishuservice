@@ -135,12 +135,11 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
         UserPromptSubmissionsDO userPromptSubmissionsDO = userPromptSubmissionsMapper.selectOne(new LambdaQueryWrapper<UserPromptSubmissionsDO>()
                 .eq(UserPromptSubmissionsDO::getMessageId, openMessageId));
         if (Objects.isNull(userPromptSubmissionsDO)) {
-            // 表单是空的
             response.setToast(new FeishuCallbackResponseDTO.Toast()
                     .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
-                    .setContent("表单为空，请重新填写"));
+                    .setContent("表单不存在，请联系管理员处理"));
         } else {
-            // 表单有值，设置提示词，先校验表单
+            // 校验表单状态
             if (UserPromptSubmissionsDO.Status.SUBMITTED.getValue() == userPromptSubmissionsDO.getSubmitted()) {
                 response.setToast(new FeishuCallbackResponseDTO.Toast()
                         .setType(FeishuCallbackResponseDTO.Toast.ToastType.WARNING.getValue())
@@ -280,7 +279,12 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                     }
                 }
                 """;
-        String newCard = String.format(newCardTemplate, promptDO.getAct(), promptId, promptId);
+        String newCard;
+        if (Objects.isNull(promptDO)) {
+            newCard = String.format(newCardTemplate, "", 1, 1);
+        } else {
+            newCard = String.format(newCardTemplate, promptDO.getAct(), promptId, promptId);
+        }
         feishuClient.delayRenewCard(newCard, token);
     }
 

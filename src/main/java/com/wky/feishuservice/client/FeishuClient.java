@@ -7,7 +7,7 @@ import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
-import com.wky.feishuservice.mapper.UserPromptMapper;
+import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.bo.FeishuComboboxOptionBO;
 import com.wky.feishuservice.model.bo.FeishuDelayRenewCardBO;
@@ -18,6 +18,7 @@ import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
 import com.wky.feishuservice.model.dto.WeatherResponseDTO;
 import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.model.po.PromptDO;
+import com.wky.feishuservice.model.po.UserPromptSubmissionsDO;
 import com.wky.feishuservice.producer.FeishuRenewCardProducer;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -56,6 +57,7 @@ public class FeishuClient {
     private final RedisUtils redisUtils;
     private final PromptMapper promptMapper;
     private final FeishuRenewCardProducer feishuRenewCardProducer;
+    private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
 
     public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
@@ -63,7 +65,7 @@ public class FeishuClient {
     }
 
     @TimedExecution(methodDescription = "飞书发送点对点消息")
-    public void sendFeishuP2pMsg(String content, String receiveId, String receiveIdType, String msgType, String messageId) {
+    public FeishuP2pResponseDTO sendFeishuP2pMsg(String content, String receiveId, String receiveIdType, String msgType, String messageId) {
         String accessToken = getTenantAccessToken();
         FeishuSendUserMsgDTO feishuSendUserMsgDTO = new FeishuSendUserMsgDTO()
                 .setMsgType(msgType)
@@ -92,6 +94,7 @@ public class FeishuClient {
             throw new FeishuP2pException(feishuResponse.getMsg() + "，" + feishuResponse.getError(), receiveId, headerParams, requestParams);
         }
         log.info("飞书机器人发送消息，result: {}", result);
+        return feishuResponse;
     }
 
     @TimedExecution(methodDescription = "获取飞书tenant_access_token")
@@ -360,7 +363,8 @@ public class FeishuClient {
     }
 
     public void sendPromptConfigCard(String receiveId, String receiveType, String messageId) {
-        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>());
+        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>()
+                .select(PromptDO::getId, PromptDO::getAct));
         List<FeishuComboboxOptionBO> options = promptDOS.stream()
                 .map(promptDO -> new FeishuComboboxOptionBO(promptDO.getAct(), promptDO.getId().toString()))
                 .toList();
@@ -492,7 +496,8 @@ public class FeishuClient {
                 }
                 """;
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
-        sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
+        FeishuP2pResponseDTO response = sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
+        userPromptSubmissionsMapper.insert(new UserPromptSubmissionsDO(null,response.getData().getMessageId(), receiveId, null, null));
 
     }
 
