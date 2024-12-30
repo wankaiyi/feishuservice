@@ -23,7 +23,7 @@
 ![image](https://github.com/user-attachments/assets/de9ec611-6482-4ce4-b0f7-52aa461fd583)
 ![image](https://github.com/user-attachments/assets/44f64406-b2d2-4e29-a0fd-3eb4fa6be98d)
 ![image](https://github.com/user-attachments/assets/d5a69488-44c7-48e1-91c5-814955aff5f5)
-![image](https://github.com/user-attachments/assets/ba7ad3cc-489c-49e6-a0e6-8da0ca452135)
+![image](https://github.com/user-attachments/assets/284eec53-fbd5-45d2-b1df-88a21c244208)
 ![image](https://github.com/user-attachments/assets/eee86576-b71f-4096-88a0-edf85e11b964)
 
 ### 技术选型
@@ -47,8 +47,7 @@
 | Apollo     | 配置中心             |
 
 ### 架构图
-
-![image](https://github.com/user-attachments/assets/1fff4412-2008-4e10-9e43-27e269497918)
+![image](https://github.com/user-attachments/assets/8d73a2de-d237-40ad-8456-4d341450294c)
 
 ### 开发环境
 
@@ -64,40 +63,46 @@
 
 1. **创建一个飞书团队**
 
-- 如果还没有飞书团队，请访问飞书官方网站或下载一个飞书APP进行注册，并创建一个团队。
+    - 如果还没有飞书团队，请访问飞书官方网站或下载一个飞书APP进行注册，并创建一个团队。
 
 2. **创建自定义应用机器人**
 
-- 登录飞书后台管理控制台。
-- 导航到“应用管理”部分，选择“创建应用”。
-- 填写基本信息，创建一个新的自定义应用机器人。
+    - 登录飞书后台管理控制台。
+    - 导航到“应用管理”部分，选择“创建应用”。
+    - 填写基本信息，创建一个新的自定义应用机器人。
 
 3. **为机器人赋予权限**
 
-- 在飞书开放平台进入开发者后台，为应用添加“机器人”能力。
-- 为应用添加权限，本项目只需开启以下权限：
+    - 在飞书开放平台进入开发者后台，为应用添加“机器人”能力。
+    - 为应用添加权限，本项目只需开启以下权限：
   <img width="733" alt="7593802c438288942d25728234baa35" src="https://github.com/user-attachments/assets/ed174122-fe2c-4366-9341-f587b99472db" />
 
-4. **在OpenAI官网获取apikey（也可以使用其他大模型，但是需要自己修改请求和响应参数）**
+4. **配置机器人的事件与回调**
+    ![image](https://github.com/user-attachments/assets/c7224f40-2cb8-4736-970f-905ead97e691)
+    ![image](https://github.com/user-attachments/assets/47bb6902-a734-4c52-bee4-9a601e386a0a)
 
-- 登录OpenAI官网，创建一个或多个apikey并给账号充值
+5. **在OpenAI官网获取apikey（也可以使用其他大模型，但是需要自己修改请求和响应参数）**
 
-5. **获取和风天气的apikey（可选）**
+    - 登录OpenAI官网，创建一个或多个apikey并给账号充值
 
-- 登录和风天气的控制台并获取apikey
+6. **获取和风天气的apikey（可选）**
 
-6. **搭建各项服务**
+    - 登录和风天气的控制台并获取apikey
 
-- 搭建Postgresql
-- 搭建Redis
-- 搭建Apollo（如果不使用Apollo可以直接将配置写在配置文件中）
+7. **搭建各项服务**
 
-7. **在Apollo中配置项目参数**
+    - 搭建Postgresql
+    - 搭建Redis
+    - 搭建Apollo（如果不使用Apollo可以直接将配置写在配置文件中）
 
-- 根据项目中的xxxConfg类在apollo或配置文件中配置参数
+8. **在Apollo中配置项目参数**
 
-8. **日志存储**
+    - 根据项目中的xxxConfg类在apollo或配置文件中配置参数
 
-- 在腾讯云控制台开通日志服务cls，并修改logback.xml中的密钥（也可以使用ELK或阿里云等）
+9. **日志存储**
 
-9. **启动项目**
+    - 在腾讯云控制台开通日志服务cls，并修改logback.xml中的密钥（也可以使用ELK或阿里云等）
+
+10. **启动项目**
+    - 配置环境变量
+          - 如果使用了Apollo，就配置Apollo的地址HOST和应用的密钥APOLLO_ACCESS_KEY
