@@ -6,8 +6,8 @@ import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
-import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
+import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import jakarta.annotation.Resource;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * 处理聊天消息策略
@@ -41,61 +40,14 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
     private final FeishuClient feishuClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
+    private final FeishuMessageService feishuMessageService;
 
     @Override
     public void handleMessage(String contentText, String messageId) {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
-        String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
-        RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
-        queue.addAsync(contentText);
-        RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
-        Map<String, String> MDCMap = MDC.getCopyOfContextMap();
-        CompletableFuture.runAsync(() -> {
-            try {
-                MDC.setContextMap(MDCMap);
-                // 获取锁，获取成功后有看门狗续命
-                if (lock.tryLock()) {
-                    while (!queue.isEmpty()) {
-                        String text = queue.take();
-                        try {
-
-                            CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> {
-                                ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
-                                return chatResponseBO;
-                            }, openaiChatThreadPool);
-                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
-                                ChatResponseBO predictNextQuestion = openAiClient.getPredictNextQuestion(receiveId, text);
-                                return predictNextQuestion;
-                            }, openaiChatThreadPool);
-                            CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
-                                try {
-                                    ChatResponseBO chatResponseBO = aiTask.get();
-                                    feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
-                                    ChatResponseBO predictNextQuestion = questionTask.get();
-                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
-                                } catch (InterruptedException | ExecutionException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }).join();
-                        } catch (OpenAiException e) {
-                            log.error("获取chatgpt结果失败 error:", e);
-                            feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
-                        } catch (FeishuP2pException e) {
-                            log.error("飞书发送消息失败 error:", e);
-                        }
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.warn("线程被中断，结束任务。queue key: {}", key);
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-                MDC.clear();
-            }
-        }, openaiChatThreadPool);
+        feishuMessageService.processUserQuestion(receiveId, contentText, receiveType, messageId);
     }
 
     @Override

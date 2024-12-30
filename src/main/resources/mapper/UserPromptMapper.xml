@@ -6,7 +6,7 @@
     <select id="selectUserPrompt" resultType="java.lang.String">
         SELECT p.prompt
         FROM user_prompt up
-        INNER JOIN prompts p ON up.prompt_id = p.id
+                 INNER JOIN prompts p ON up.prompt_id = p.id
         WHERE open_id = #{openId}
     </select>
 </mapper>

@@ -22,6 +22,7 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +186,8 @@ public class OpenAiClient {
     @TimedExecution(methodDescription = "根据用户问题提示下一步用户可能问出的问题")
     public ChatResponseBO getPredictNextQuestion(String openId, String question) {
         String apiKey = apiKeySelector.selectApiKey();
-        List<ChatRequestDTO.Message> messages = chatMsgCache.getMsgCache(openId);
+        List<ChatRequestDTO.Message> messages = new ArrayList<>();
+        messages.add(new ChatRequestDTO.Message("user", question));
         // 拼接提示词
         addPromptIfNeeded(messages, openId);
         ChatResponseDTO response = processChatgptRequest(

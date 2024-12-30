@@ -47,6 +47,7 @@
 | Apollo     | 配置中心             |
 
 ### 架构图
+
 ![image](https://github.com/user-attachments/assets/8d73a2de-d237-40ad-8456-4d341450294c)
 
 ### 开发环境
@@ -75,11 +76,11 @@
 
     - 在飞书开放平台进入开发者后台，为应用添加“机器人”能力。
     - 为应用添加权限，本项目只需开启以下权限：
-  <img width="733" alt="7593802c438288942d25728234baa35" src="https://github.com/user-attachments/assets/ed174122-fe2c-4366-9341-f587b99472db" />
+      <img width="733" alt="7593802c438288942d25728234baa35" src="https://github.com/user-attachments/assets/ed174122-fe2c-4366-9341-f587b99472db" />
 
 4. **配置机器人的事件与回调**
-    ![image](https://github.com/user-attachments/assets/c7224f40-2cb8-4736-970f-905ead97e691)
-    ![image](https://github.com/user-attachments/assets/47bb6902-a734-4c52-bee4-9a601e386a0a)
+   ![image](https://github.com/user-attachments/assets/c7224f40-2cb8-4736-970f-905ead97e691)
+   ![image](https://github.com/user-attachments/assets/47bb6902-a734-4c52-bee4-9a601e386a0a)
 
 5. **在OpenAI官网获取apikey（也可以使用其他大模型，但是需要自己修改请求和响应参数）**
 
@@ -105,4 +106,4 @@
 
 10. **启动项目**
     - 配置环境变量
-      - 如果使用了Apollo，就配置Apollo的地址HOST和应用的密钥APOLLO_ACCESS_KEY
+        - 如果使用了Apollo，就配置Apollo的地址HOST和应用的密钥APOLLO_ACCESS_KEY

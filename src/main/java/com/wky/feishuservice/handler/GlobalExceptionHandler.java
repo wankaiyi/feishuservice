@@ -29,7 +29,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(FeishuP2pException.class)
     public void handleFeishuP2pException(FeishuP2pException e) {
-        feishuClient.handelP2pException(e);
+        feishuClient.handleP2pException(e);
     }
 
 }

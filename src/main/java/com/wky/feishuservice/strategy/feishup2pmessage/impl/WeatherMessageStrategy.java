@@ -36,7 +36,7 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
         // 只保留中文字符
         String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
         Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather = locationService.getWeather(location);
-        feishuClient.handelWeather(locationAndWeather, receiveId, receiveType, "interactive");
+        feishuClient.handleWeather(locationAndWeather, receiveId, receiveType, "interactive");
     }
 
     @Override
