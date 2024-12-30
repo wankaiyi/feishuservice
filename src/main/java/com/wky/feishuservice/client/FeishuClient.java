@@ -69,6 +69,7 @@ public class FeishuClient {
 
     @TimedExecution(methodDescription = "飞书发送点对点消息")
     public FeishuP2pResponseDTO sendFeishuP2pMsg(String content, String receiveId, String receiveIdType, String msgType, String messageId) {
+        receiveIdType = StringUtils.isBlank(receiveIdType) ? "open_id" : receiveIdType;
         String accessToken = getTenantAccessToken();
         FeishuSendUserMsgDTO feishuSendUserMsgDTO = new FeishuSendUserMsgDTO()
                 .setMsgType(msgType)
@@ -79,10 +80,7 @@ public class FeishuClient {
             put("Content-Type", "application/json; charset=utf-8");
             put("Authorization", "Bearer " + accessToken);
         }};
-        Map<String, String> requestParams = new HashMap<>() {{
-            put("receive_id_type", receiveIdType);
-
-        }};
+        Map<String, String> requestParams = Map.of("receive_id_type", receiveIdType);
         String url;
         if (StringUtils.isNotEmpty(messageId)) {
             url = String.format(FeishuConstants.FEISHU_REPLY_USER_URL, messageId);
@@ -159,7 +157,7 @@ public class FeishuClient {
         return String.format(CHAT_RESPONSE_TEMPLATE, JacksonUtils.serialize(content), model, totalTokens, price);
     }
 
-    public void handelP2pException(FeishuP2pException e) {
+    public void handleP2pException(FeishuP2pException e) {
         FeishuSendUserMsgDTO feishuSendUserMsgDTO = new FeishuSendUserMsgDTO();
         feishuSendUserMsgDTO.setContent(getContent(e.getMessage()));
         feishuSendUserMsgDTO.setMsgType("text");
@@ -168,7 +166,7 @@ public class FeishuClient {
         HttpUtils.postForm(FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL, data, e.getHeaderParams(), e.getRequestParams());
     }
 
-    public void handelWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {
+    public void handleWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {
         String content = getContent(locationAndWeather);
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
         self.sendFeishuP2pMsg(content, receiveId, receiveType, msgType, null);
@@ -345,6 +343,7 @@ public class FeishuClient {
                 ]
             }
             """;
+
     public static String buildMessageCard(String threadPoolInfo) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -499,7 +498,7 @@ public class FeishuClient {
                 """;
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
         FeishuP2pResponseDTO response = sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
-        userPromptSubmissionsMapper.insert(new UserPromptSubmissionsDO(null,response.getData().getMessageId(), receiveId, null, null));
+        userPromptSubmissionsMapper.insert(new UserPromptSubmissionsDO(null, response.getData().getMessageId(), receiveId, null, null));
 
     }
 
@@ -510,29 +509,22 @@ public class FeishuClient {
     //
     public void sendP2PPredictQuestion(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
-        self.sendFeishuP2pMsg(PredictQuestionContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
+        self.sendFeishuP2pMsg(predictQuestionContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
     }
 
-    public String PredictQuestionContent(ChatResponseBO chatResponseBO) {
+    public String predictQuestionContent(ChatResponseBO chatResponseBO) {
         String content = chatResponseBO.getContent();
-        String model = chatResponseBO.getModel();
-        Integer totalTokens = chatResponseBO.getTotalTokens();
-        BigDecimal price = chatResponseBO.getPrice();
-        if (content==null){
+        if (content == null) {
             return "";
         }
-        String[] split = content.split(" ");
-        List<Map<String, Object>> questions = Arrays.stream(split).map(question -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("question", question);
-            return map;
-        }).toList();
-        Map<String,Object> map = new HashMap<>();
-        map.put("questions", questions);
-        String format = String.format(predictQuestionCard, JacksonUtils.serialize(map), model, totalTokens, price);
-        return  format;
+        //将问题字符串根据空格分割
+        String[] questionSplitList = content.split(" ");
+        List<Map<String, String>> questions = Arrays.stream(questionSplitList).map(question -> Map.of("question", question)).toList();
+        return String.format(predictQuestionCard, JacksonUtils.serialize(Map.of("questions", questions)));
     }
-    private String predictQuestionCard= """
+
+    //预测用户肯能使用的问题的模板
+    private String predictQuestionCard = """
             {
                 "type":"template",
                 "data":{

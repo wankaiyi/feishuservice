@@ -81,7 +81,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                             }).join();
                         } catch (OpenAiException e) {
                             log.error("获取chatgpt结果失败 error:", e);
-                            feishuClient.handelP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
+                            feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
                         } catch (FeishuP2pException e) {
                             log.error("飞书发送消息失败 error:", e);
                         }
