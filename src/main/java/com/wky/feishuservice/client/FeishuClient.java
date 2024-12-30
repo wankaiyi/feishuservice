@@ -518,7 +518,7 @@ public class FeishuClient {
             return "";
         }
         //将问题字符串根据空格分割
-        String[] questionSplitList = content.split(" ");
+        String[] questionSplitList = content.split("\n");
         List<Map<String, String>> questions = Arrays.stream(questionSplitList).map(question -> Map.of("question", question)).toList();
         return String.format(predictQuestionCard, JacksonUtils.serialize(Map.of("questions", questions)));
     }
