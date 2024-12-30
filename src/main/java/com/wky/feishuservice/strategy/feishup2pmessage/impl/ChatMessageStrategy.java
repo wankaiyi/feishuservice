@@ -47,38 +47,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
-        String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
-        RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
-        queue.addAsync(contentText);
-        RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
-        Map<String, String> MDCMap = MDC.getCopyOfContextMap();
-        CompletableFuture.runAsync(() -> {
-            try {
-                MDC.setContextMap(MDCMap);
-                // 获取锁，获取成功后有看门狗续命
-                if (lock.tryLock()) {
-                    while (!queue.isEmpty()) {
-                        String text = queue.take();
-                        try {
-                            //处理用户发起的问题
-                            feishuMessageService.processUserQuestion(receiveId, text, receiveType, messageId);
-                        } catch (OpenAiException e) {
-                            log.error("获取chatgpt结果失败 error:", e);
-                            feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
-                        } catch (FeishuP2pException e) {
-                            log.error("飞书发送消息失败 error:", e);
-                        }
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.warn("线程被中断，结束任务。queue key: {}", key);
-            } finally {
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-                MDC.clear();
-            }
-        }, openaiChatThreadPool);
+        feishuMessageService.processUserQuestion(receiveId, contentText, receiveType, messageId);
     }
 
     @Override

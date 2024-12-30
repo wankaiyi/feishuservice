@@ -5,23 +5,28 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.constants.FeishuConstants;
+import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.FeishuCallbackActionTag;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
+import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.mapper.PromptMapper;
 import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
+import com.wky.feishuservice.model.bo.ChatMessageBo;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
+import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.model.po.PromptDO;
 import com.wky.feishuservice.model.po.UserPromptSubmissionsDO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategyFactory;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategyFactory;
+import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
 import com.wky.feishuservice.utils.SpringContextUtil;
 import com.wky.feishuservice.utils.UserInfoContext;
@@ -29,8 +34,10 @@ import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.slf4j.MDC;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -285,18 +292,53 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     @Override
     public void processUserQuestion(String receiveId, String text, String receiveType, String messageId) {
-        CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, text), openaiChatThreadPool);
-        CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId, text), openaiChatThreadPool);
-        CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
+        log.info("messageId:{}", messageId);
+        String key = OpenAiConstants.getOpenaiChatQueueRedisKey(receiveId);
+        RBlockingQueue<String> queue = redissonClient.getBlockingQueue(key);
+        queue.addAsync(JacksonUtils.serialize(new ChatMessageBo(text, messageId)));
+        RLock lock = redissonClient.getLock(OpenAiConstants.getOpenaiChatLockKey(receiveId));
+        Map<String, String> MDCMap = MDC.getCopyOfContextMap();
+        CompletableFuture.runAsync(() -> {
             try {
-                ChatResponseBO chatResponseBO = aiTask.get();
-                ChatResponseBO predictNextQuestion = questionTask.get();
-                feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
-                feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("处理用户问题失败 error:", e);
+                MDC.setContextMap(MDCMap);
+                // 获取锁，获取成功后有看门狗续命
+                if (lock.tryLock()) {
+                    while (!queue.isEmpty()) {
+                        String chatMessageBoStr = queue.take();
+                        ChatMessageBo chatMessageBo = JacksonUtils.deserialize(chatMessageBoStr, ChatMessageBo.class);
+                        String question = chatMessageBo.getText();
+                        try {
+                            log.info("多线程的messageId:{}", messageId);
+                            CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, question), openaiChatThreadPool);
+                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId, question), openaiChatThreadPool);
+                            CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
+                                try {
+                                    ChatResponseBO chatResponseBO = aiTask.get();
+                                    ChatResponseBO predictNextQuestion = questionTask.get();
+                                    FeishuP2pResponseDTO feishuP2pResponseDTO = feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId());
+                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
+                                } catch (InterruptedException | ExecutionException e) {
+                                    log.error("处理用户问题失败 error:", e);
+                                }
+                            }).join();
+                        } catch (OpenAiException e) {
+                            log.error("获取chatgpt结果失败 error:", e);
+                            feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
+                        } catch (FeishuP2pException e) {
+                            log.error("飞书发送消息失败 error:", e);
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.warn("线程被中断，结束任务。queue key: {}", key);
+            } finally {
+                if (lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+                MDC.clear();
             }
-        }).join();
+        }, openaiChatThreadPool);
+
     }
 
     private void handleSelectStatic(String openId, String option, String openMessageId, FeishuCallbackResponseDTO response) {

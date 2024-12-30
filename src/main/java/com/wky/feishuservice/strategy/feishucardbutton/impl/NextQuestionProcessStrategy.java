@@ -5,6 +5,7 @@ import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
+import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategy;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -35,9 +36,9 @@ public class NextQuestionProcessStrategy implements FeishuCardButtonStrategy {
         Map<String, Object> map = new HashMap<>();
         map.put("text", question);
         String format = String.format(defalutCard, JacksonUtils.serialize(map));
-        feishuClient.sendFeishuP2pMsg(format, receiveId, "open_id", "interactive", null);
+        FeishuP2pResponseDTO feishuP2pResponseDTO = feishuClient.sendFeishuP2pMsg(format, receiveId, "open_id", "interactive", null);
         //处理用户发起的问题
-        feishuMessageService.processUserQuestion(receiveId, question, receiveType, openMessageId);
+        feishuMessageService.processUserQuestion(receiveId, question, receiveType, feishuP2pResponseDTO.getData().getMessageId());
     }
 
     private String defalutCard = """

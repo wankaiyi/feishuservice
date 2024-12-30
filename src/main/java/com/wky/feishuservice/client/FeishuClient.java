@@ -62,9 +62,9 @@ public class FeishuClient {
     private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
     private final FeishuConfig feishuConfig;
 
-    public void sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
+    public FeishuP2pResponseDTO sendP2pMsg(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
-        self.sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
+        return self.sendFeishuP2pMsg(getContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
     }
 
     @TimedExecution(methodDescription = "飞书发送点对点消息")
