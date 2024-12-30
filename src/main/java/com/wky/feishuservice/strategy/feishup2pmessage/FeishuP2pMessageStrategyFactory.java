@@ -11,7 +11,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FeishuP2pMessageStrategyFactory {
 
-    private FeishuP2pMessageStrategyFactory() {}
+    private FeishuP2pMessageStrategyFactory() {
+    }
 
     public static FeishuP2pMessageStrategy getStrategy(String contentText) {
         Map<String, FeishuP2pMessageStrategy> feishuMessageStrategyList = SpringUtil.getBeansOfType(FeishuP2pMessageStrategy.class);

@@ -181,6 +181,7 @@ public class OpenAiClient {
         );
         return JacksonUtils.deserialize(result, ImageGenerateResponseDTO.class);
     }
+
     @TimedExecution(methodDescription = "根据用户问题提示下一步用户可能问出的问题")
     public ChatResponseBO getPredictNextQuestion(String openId, String question) {
         String apiKey = apiKeySelector.selectApiKey();
@@ -188,8 +189,8 @@ public class OpenAiClient {
         // 拼接提示词
         addPromptIfNeeded(messages, openId);
         ChatResponseDTO response = processChatgptRequest(
-                List.of(new ChatRequestDTO.Message("system",OpenAiConstants.PREDICT_QUESTION_PROMPT),
-                        new ChatRequestDTO.Message("user",JacksonUtils.serialize(messages)+"根据这个上下文预测用户下一个问题"))
+                List.of(new ChatRequestDTO.Message("system", OpenAiConstants.PREDICT_QUESTION_PROMPT),
+                        new ChatRequestDTO.Message("user", JacksonUtils.serialize(messages) + "根据这个上下文预测用户下一个问题"))
                 , apiKey);
         ChatResponseDTO.ChatError error;
         if (Objects.nonNull(error = response.getError())) {

@@ -6,7 +6,6 @@ import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
-import com.wky.feishuservice.model.dto.ChatResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategy;
@@ -30,26 +29,27 @@ public class NextQuestionProcessStrategy implements FeishuCardButtonStrategy {
     private final OpenAiClient openAiClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
+
     @Override
     public void handle(String openMessageId, FeishuCallbackResponseDTO response, String token, String question) {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
         //先发送消息给用户，告诉用户他问了什么问题
-        Map<String,Object> map=new HashMap<>();
-        map.put("text",question);
+        Map<String, Object> map = new HashMap<>();
+        map.put("text", question);
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
         String format = String.format(defalutCard, JacksonUtils.serialize(map));
-        self.sendFeishuP2pMsg(format,receiveId,"open_id","interactive",null);
+        self.sendFeishuP2pMsg(format, receiveId, "open_id", "interactive", null);
         CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> {
             ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, question);
             return chatResponseBO;
         }, openaiChatThreadPool);
         CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
-            ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,question);
+            ChatResponseBO predictNextQuestion = openAiClient.getPredictNextQuestion(receiveId, question);
             return predictNextQuestion;
         }, openaiChatThreadPool);
-        CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
+        CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
             try {
                 ChatResponseBO chatResponseBO = aiTask.get();
                 feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", openMessageId);
@@ -60,7 +60,8 @@ public class NextQuestionProcessStrategy implements FeishuCardButtonStrategy {
             }
         }).join();
     }
-    private String defalutCard= """
+
+    private String defalutCard = """
             {
                 "type":"template",
                 "data":{

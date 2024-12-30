@@ -147,7 +147,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     @Transactional(rollbackFor = Exception.class)
     public void handleClickButton(String openMessageId, FeishuCallbackResponseDTO response, String token, FeishuCardButtonType type, String question) {
-        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token,question);
+        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token, question);
     }
 
     @Override

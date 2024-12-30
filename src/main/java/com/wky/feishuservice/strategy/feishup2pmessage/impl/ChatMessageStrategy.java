@@ -66,10 +66,10 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                                 return chatResponseBO;
                             }, openaiChatThreadPool);
                             CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
-                                ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,text);
+                                ChatResponseBO predictNextQuestion = openAiClient.getPredictNextQuestion(receiveId, text);
                                 return predictNextQuestion;
                             }, openaiChatThreadPool);
-                            CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
+                            CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
                                 try {
                                     ChatResponseBO chatResponseBO = aiTask.get();
                                     feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);

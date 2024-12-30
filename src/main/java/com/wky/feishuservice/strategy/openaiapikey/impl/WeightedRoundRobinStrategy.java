@@ -31,35 +31,35 @@ public class WeightedRoundRobinStrategy implements ApiKeySelectionStrategy {
     private final OpenAiConfig openaiConfig;
     private static final String API_KEY_ZSET_KEY = "openai:weighted_round_robin_strategy:api_key_zset";
     private static final String LUA_SCRIPT = """
-                local api_keys = redis.call('HGETALL', KEYS[1])
-                if #api_keys == 0 then
-                    return nil
-                end
-
-                local total_weight = 0
-                local weighted_keys = {}
-
-                for i = 1, #api_keys, 2 do
-                    local key = api_keys[i]
-                    local weight = tonumber(api_keys[i + 1])
-                    if weight then
-                        total_weight = total_weight + weight
-                        table.insert(weighted_keys, {key = key, weight = weight})
-                    end
-                end
-
-                local random_choice = math.random() * total_weight
-
-                local cumulative_weight = 0
-                for _, entry in ipairs(weighted_keys) do
-                    cumulative_weight = cumulative_weight + entry.weight
-                    if random_choice <= cumulative_weight then
-                        return entry.key
-                    end
-                end
-
+            local api_keys = redis.call('HGETALL', KEYS[1])
+            if #api_keys == 0 then
                 return nil
-                """;
+            end
+            
+            local total_weight = 0
+            local weighted_keys = {}
+            
+            for i = 1, #api_keys, 2 do
+                local key = api_keys[i]
+                local weight = tonumber(api_keys[i + 1])
+                if weight then
+                    total_weight = total_weight + weight
+                    table.insert(weighted_keys, {key = key, weight = weight})
+                end
+            end
+            
+            local random_choice = math.random() * total_weight
+            
+            local cumulative_weight = 0
+            for _, entry in ipairs(weighted_keys) do
+                cumulative_weight = cumulative_weight + entry.weight
+                if random_choice <= cumulative_weight then
+                    return entry.key
+                end
+            end
+            
+            return nil
+            """;
 
     @Override
     public String selectApiKey() {

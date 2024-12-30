@@ -345,6 +345,7 @@ public class FeishuClient {
                 ]
             }
             """;
+
     public static String buildMessageCard(String threadPoolInfo) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -499,7 +500,7 @@ public class FeishuClient {
                 """;
         String card = cardTemplate.replace("{OPTIONS}", optionsStringBuilder.toString());
         FeishuP2pResponseDTO response = sendFeishuP2pMsg(card, receiveId, receiveType, "interactive", messageId);
-        userPromptSubmissionsMapper.insert(new UserPromptSubmissionsDO(null,response.getData().getMessageId(), receiveId, null, null));
+        userPromptSubmissionsMapper.insert(new UserPromptSubmissionsDO(null, response.getData().getMessageId(), receiveId, null, null));
 
     }
 
@@ -518,7 +519,7 @@ public class FeishuClient {
         String model = chatResponseBO.getModel();
         Integer totalTokens = chatResponseBO.getTotalTokens();
         BigDecimal price = chatResponseBO.getPrice();
-        if (content==null){
+        if (content == null) {
             return "";
         }
         String[] split = content.split(" ");
@@ -527,12 +528,13 @@ public class FeishuClient {
             map.put("question", question);
             return map;
         }).toList();
-        Map<String,Object> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("questions", questions);
         String format = String.format(predictQuestionCard, JacksonUtils.serialize(map), model, totalTokens, price);
-        return  format;
+        return format;
     }
-    private String predictQuestionCard= """
+
+    private String predictQuestionCard = """
             {
                 "type":"template",
                 "data":{

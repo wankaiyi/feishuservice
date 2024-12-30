@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FeishuCardButtonStrategyFactory {
 
-    private FeishuCardButtonStrategyFactory() {}
+    private FeishuCardButtonStrategyFactory() {
+    }
 
     public static FeishuCardButtonStrategy getStrategy(FeishuCardButtonType type) {
         Map<String, FeishuCardButtonStrategy> feishuMessageStrategyList = SpringUtil.getBeansOfType(FeishuCardButtonStrategy.class);

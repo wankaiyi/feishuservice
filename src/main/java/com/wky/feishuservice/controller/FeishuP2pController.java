@@ -30,13 +30,13 @@ public class FeishuP2pController {
     @RateLimiter
     @PostMapping("/chat")
     public JSONObject postFeishuNotice(@RequestBody FeishuP2pChatDTO feishuP2pChatDTO) {
-         return feishuMessageService.processFeishuNotice(feishuP2pChatDTO);
+        return feishuMessageService.processFeishuNotice(feishuP2pChatDTO);
     }
 
     @Log
     @PostMapping("/callback")
     public FeishuCallbackResponseDTO callback(@RequestBody FeishuCallbackRequestDTO feishuCallbackRequestDTO) {
-       return feishuMessageService.processFeishuCallback(feishuCallbackRequestDTO);
+        return feishuMessageService.processFeishuCallback(feishuCallbackRequestDTO);
     }
 
 }

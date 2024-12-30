@@ -32,16 +32,17 @@ public class RoundRobinStrategy implements ApiKeySelectionStrategy {
     private static final String API_KEY_LIST_KEY = "openai:round_robin_strategy:api_key_list";
     private static final String CURRENT_INDEX_KEY = "openai:round_robin_strategy:current_index";
     private static final String LUA_SCRIPT = """
-                local listKey = KEYS[1]
-                local indexKey = KEYS[2]
-                local currentIndex = tonumber(redis.call('GET', indexKey) or 0)
-                local listLength = redis.call('LLEN', listKey)
-                if listLength == 0 then return nil end
-                currentIndex = (currentIndex % listLength) + 1
-                local apiKey = redis.call('LINDEX', listKey, currentIndex - 1)
-                redis.call('SET', indexKey, currentIndex)
-                return apiKey
-                """;
+            local listKey = KEYS[1]
+            local indexKey = KEYS[2]
+            local currentIndex = tonumber(redis.call('GET', indexKey) or 0)
+            local listLength = redis.call('LLEN', listKey)
+            if listLength == 0 then return nil end
+            currentIndex = (currentIndex % listLength) + 1
+            local apiKey = redis.call('LINDEX', listKey, currentIndex - 1)
+            redis.call('SET', indexKey, currentIndex)
+            return apiKey
+            """;
+
     @Override
     public String selectApiKey() {
         return redissonClient.getScript()
