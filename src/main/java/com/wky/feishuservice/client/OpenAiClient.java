@@ -201,8 +201,6 @@ public class OpenAiClient {
 
         String resContent = response.getChoices()[0].getMessageResp().getContent();
 
-        cacheMsg(openId, resContent);
-
         BigDecimal price = getPrice(response.getUsage().getPromptTokens(), response.getUsage().getCompletionTokens());
         updateBalance(price, apiKey);
 
