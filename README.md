@@ -105,4 +105,4 @@
 
 10. **启动项目**
     - 配置环境变量
-          - 如果使用了Apollo，就配置Apollo的地址HOST和应用的密钥APOLLO_ACCESS_KEY
+      - 如果使用了Apollo，就配置Apollo的地址HOST和应用的密钥APOLLO_ACCESS_KEY
