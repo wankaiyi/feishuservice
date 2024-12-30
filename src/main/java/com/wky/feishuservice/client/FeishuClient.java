@@ -12,19 +12,16 @@ import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.bo.FeishuComboboxOptionBO;
 import com.wky.feishuservice.model.bo.FeishuDelayRenewCardBO;
-import com.wky.feishuservice.model.dto.DailyWeatherDTO;
+import com.wky.feishuservice.model.bo.WeatherInfoBO;
 import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuSendUserMsgDTO;
 import com.wky.feishuservice.model.dto.FeishuUploadResponseDTO;
-import com.wky.feishuservice.model.dto.WeatherResponseDTO;
-import com.wky.feishuservice.model.po.LocationDO;
 import com.wky.feishuservice.model.po.PromptDO;
 import com.wky.feishuservice.model.po.UserPromptSubmissionsDO;
 import com.wky.feishuservice.producer.FeishuRenewCardProducer;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
-import groovy.lang.Tuple2;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -168,21 +165,15 @@ public class FeishuClient {
         HttpUtils.postForm(FeishuConstants.FEISHU_SEND_MESSAGE_TO_USER_URL, data, e.getHeaderParams(), e.getRequestParams());
     }
 
-    public void handelWeather(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather, String receiveId, String receiveType, String msgType) {
-        String content = getContent(locationAndWeather);
+    public void handelWeather(WeatherInfoBO weather, String receiveId, String receiveType, String msgType) {
+        String content = getContent(weather);
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
         self.sendFeishuP2pMsg(content, receiveId, receiveType, msgType, null);
     }
 
 
-    private String getContent(Tuple2<LocationDO, WeatherResponseDTO> locationAndWeather) {
-        LocationDO location = locationAndWeather.getV1();
-        WeatherResponseDTO weather = locationAndWeather.getV2();
-        List<DailyWeatherDTO> dailyWeathers = weather.getDailyWeathers();
-        return createWeatherCard(location.getLocationName(), dailyWeathers);
-    }
-
-    private static String createWeatherCard(String cityName, List<DailyWeatherDTO> weatherList) {
+    private String getContent(WeatherInfoBO weather) {
+        List<WeatherInfoBO.DailyWeather> dailyWeathers = weather.getDailyWeathers();
         String cardHeader = """
                 {
                     "config": {
@@ -201,9 +192,8 @@ public class FeishuClient {
                         { "tag": "hr" },
                 """;
 
-        StringBuilder cardBuilder = new StringBuilder(String.format(cardHeader, "\uD83C\uDF24️ 天气预报 - " + cityName));
+        StringBuilder cardBuilder = new StringBuilder(String.format(cardHeader, "\uD83C\uDF24️ 天气预报 - " + weather.getLocationName()));
 
-        // 使用文本块来定义每个天气块
         String weatherTemplate = """
                     { "tag": "div", "fields": [
                         { "is_short": false, "text": { "tag": "lark_md", "content": "**📅 日期**: %s" } }
@@ -232,33 +222,50 @@ public class FeishuClient {
 
 
         // 添加每天的天气预报
-        for (int j = 0; j < weatherList.size(); j++) {
-            DailyWeatherDTO weather = weatherList.get(j);
+        for (int j = 0; j < dailyWeathers.size(); j++) {
+            WeatherInfoBO.DailyWeather dailyWeather = dailyWeathers.get(j);
             cardBuilder.append(String.format(weatherTemplate,
-                    weather.getFxDate(),
-                    weather.getSunrise(),
-                    weather.getSunset(),
-                    weather.getTempMax(),
-                    weather.getTempMin(),
-                    weather.getPrecip(),
-                    weather.getVis(),
-                    weather.getWindSpeedDay(),
-                    weather.getWindSpeedNight(),
-                    weather.getTextDay(),
-                    weather.getTextNight()));
-            if (j < weatherList.size() - 1) {
+                    dailyWeather.getFxDate(),
+                    dailyWeather.getSunrise(),
+                    dailyWeather.getSunset(),
+                    dailyWeather.getTempMax(),
+                    dailyWeather.getTempMin(),
+                    dailyWeather.getPrecip(),
+                    dailyWeather.getVis(),
+                    dailyWeather.getWindSpeedDay(),
+                    dailyWeather.getWindSpeedNight(),
+                    dailyWeather.getTextDay(),
+                    dailyWeather.getTextNight()));
+            if (j < dailyWeathers.size() - 1) {
                 cardBuilder.append("""
                         ,
                                             { "tag": "hr" },
+                        """);
+            } else {
+                cardBuilder.append("""
+                        ,
+                                            { "tag": "hr" }
                         """);
             }
         }
 
         // 为JSON添加闭合符号
-        cardBuilder.append("""
+        cardBuilder.append(String.format("""
+                    ,{
+                        "tag": "div",
+                        "fields": [
+                            {
+                                "is_short": false,
+                                "text": {
+                                    "tag": "lark_md",
+                                    "content": %s
+                                }
+                            }
+                        ]
+                    }
                     ]
                 }
-                """);
+                """, JacksonUtils.serialize("**温馨提示**: " + weather.getSuggestion())));
         return cardBuilder.toString();
     }
 
@@ -367,7 +374,8 @@ public class FeishuClient {
     }
 
     public void sendPromptConfigCard(String receiveId, String receiveType, String messageId) {
-        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>());
+        List<PromptDO> promptDOS = promptMapper.selectList(new LambdaQueryWrapper<PromptDO>()
+                .select(PromptDO::getAct, PromptDO::getId));
         List<FeishuComboboxOptionBO> options = promptDOS.stream()
                 .map(promptDO -> new FeishuComboboxOptionBO(promptDO.getAct(), promptDO.getId().toString()))
                 .toList();

@@ -3,3 +3,6 @@ feishu:
     app:
       id: cli_a7bbd1060d10500d
       secret: TEfOAwPNcENO1DWiE36PMcFxhFNbdsB8
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
