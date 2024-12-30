@@ -156,7 +156,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     @Transactional(rollbackFor = Exception.class)
     public void handleClickButton(String openMessageId, FeishuCallbackResponseDTO response, String token, FeishuCardButtonType type, String question) {
-        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token,question);
+        FeishuCardButtonStrategyFactory.getStrategy(type).handle(openMessageId, response, token, question);
     }
 
     @Override
@@ -286,8 +286,8 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     @Override
     public void processUserQuestion(String receiveId, String text, String receiveType, String messageId) {
         CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, text), openaiChatThreadPool);
-        CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId,text), openaiChatThreadPool);
-        CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
+        CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId, text), openaiChatThreadPool);
+        CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
             try {
                 ChatResponseBO chatResponseBO = aiTask.get();
                 ChatResponseBO predictNextQuestion = questionTask.get();

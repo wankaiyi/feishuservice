@@ -3,13 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.wky.feishuservice.mapper.UserPromptMapper">
-
-
     <select id="selectUserPrompt" resultType="java.lang.String">
         SELECT p.prompt
         FROM user_prompt up
-        INNER JOIN prompts p ON up.prompt_id = p.id
+                 INNER JOIN prompts p ON up.prompt_id = p.id
         WHERE open_id = #{openId}
     </select>
-
 </mapper>

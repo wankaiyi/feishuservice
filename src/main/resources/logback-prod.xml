@@ -4,9 +4,9 @@
 
     <appender name="LoghubAppender" class="com.tencentcloudapi.cls.LoghubAppender">
         <!--必选项-->
-<!--        域名配置 详见https://cloud.tencent.com/document/product/614/18940#.E5.9F.9F.E5.90.8D-->
+        <!--        域名配置 详见https://cloud.tencent.com/document/product/614/18940#.E5.9F.9F.E5.90.8D-->
         <endpoint>ap-guangzhou.cls.tencentcs.com</endpoint>
-<!--        密钥信息 前往https://console.cloud.tencent.com/cam/capi获取-->
+        <!--        密钥信息 前往https://console.cloud.tencent.com/cam/capi获取-->
         <accessKeyId>AKIDzrWyGRWP8g1KYeHjCUcZO2iefdYUNyOa</accessKeyId>
         <accessKeySecret>98tQn0770mQsBMNH5oQuCPYZMv04wgEZ</accessKeySecret>
         <topicId>024958bb-e75a-4cfb-8e49-4e799ad3ac19</topicId>

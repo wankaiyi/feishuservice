@@ -7,8 +7,6 @@ import com.wky.feishuservice.utils.UserInfoContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,7 +27,7 @@ public class PromptConfigStrategy implements FeishuP2pMessageStrategy {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
-        feishuClient.sendPromptConfigCard(receiveId, receiveType,  messageId);
+        feishuClient.sendPromptConfigCard(receiveId, receiveType, messageId);
     }
 
     @Override

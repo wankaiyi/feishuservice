@@ -23,7 +23,6 @@ public class WeatherResponseDTO {
     private Refer refer;
 
 
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

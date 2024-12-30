@@ -32,12 +32,12 @@ public class RandomStrategy implements ApiKeySelectionStrategy {
     private final OpenAiConfig openaiConfig;
     private static final String API_KEY_LIST_KEY = "openai:random_strategy:api_key_list";
     private static final String LUA_SCRIPT = """
-                local listKey = KEYS[1]
-                local listLength = redis.call('LLEN', listKey)
-                if listLength == 0 then return nil end
-                local randomIndex = math.random(0, listLength - 1)
-                return redis.call('LINDEX', listKey, randomIndex)
-                """;
+            local listKey = KEYS[1]
+            local listLength = redis.call('LLEN', listKey)
+            if listLength == 0 then return nil end
+            local randomIndex = math.random(0, listLength - 1)
+            return redis.call('LINDEX', listKey, randomIndex)
+            """;
 
     @Override
     public String selectApiKey() {

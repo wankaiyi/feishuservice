@@ -1,12 +1,9 @@
 package com.wky.feishuservice.strategy.feishucardbutton.impl;
 
-import cn.hutool.extra.spring.SpringUtil;
 import com.wky.feishuservice.client.FeishuClient;
 import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
-import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
-import com.wky.feishuservice.model.dto.ChatResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategy;
@@ -19,8 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @Component
 @RequiredArgsConstructor

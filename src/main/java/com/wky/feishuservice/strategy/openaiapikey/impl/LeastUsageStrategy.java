@@ -30,15 +30,15 @@ public class LeastUsageStrategy implements ApiKeySelectionStrategy {
     private final OpenAiConfig openaiConfig;
     private static final String API_KEY_USAGE_COUNT_ZSET = "openai:least_usage_strategy:api_key_set";
     private static final String LUA_SCRIPT = """
-                local zsetKey = KEYS[1]
-                local keyWithMinScore = redis.call('ZRANGE', zsetKey, 0, 0, 'WITHSCORES')
-                if keyWithMinScore == nil or #keyWithMinScore == 0 then
-                    return nil
-                end
-                local member = keyWithMinScore[1]
-                redis.call('ZINCRBY', zsetKey, 1, member)
-                return member
-                """;
+            local zsetKey = KEYS[1]
+            local keyWithMinScore = redis.call('ZRANGE', zsetKey, 0, 0, 'WITHSCORES')
+            if keyWithMinScore == nil or #keyWithMinScore == 0 then
+                return nil
+            end
+            local member = keyWithMinScore[1]
+            redis.call('ZINCRBY', zsetKey, 1, member)
+            return member
+            """;
 
     @Override
     public String selectApiKey() {
@@ -59,7 +59,7 @@ public class LeastUsageStrategy implements ApiKeySelectionStrategy {
         // 添加zset中没有的apikey
         apiKeys.forEach(apiKey -> {
             if (!sortedSet.contains(apiKey)) {
-                sortedSet.addAsync(0 ,apiKey);
+                sortedSet.addAsync(0, apiKey);
             }
         });
         // 删除多余的apikey

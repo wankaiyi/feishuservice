@@ -6,7 +6,6 @@ import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
-import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
@@ -24,7 +23,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 /**
  * 处理聊天消息策略
@@ -63,7 +61,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                         String text = queue.take();
                         try {
                             //处理用户发起的问题
-                            feishuMessageService.processUserQuestion(receiveId,text,receiveType,messageId);
+                            feishuMessageService.processUserQuestion(receiveId, text, receiveType, messageId);
                         } catch (OpenAiException e) {
                             log.error("获取chatgpt结果失败 error:", e);
                             feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));

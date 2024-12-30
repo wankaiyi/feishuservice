@@ -51,7 +51,6 @@ public class ImageGenerateRequestDTO {
     private String size;
 
     /**
-     *
      * 生成图像的大小。必须是`256x256`、`512x512`或`1024x1024`for之一`dall-e-2`。对于模型来说，必须是`1024x1024`、`1792x1024`、
      * 或之一。`1024x1792``dall-e-3`
      */

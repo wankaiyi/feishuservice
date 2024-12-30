@@ -3,7 +3,6 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.wky.feishuservice.mapper.LocationMapper">
-
     <resultMap id="BaseResultMap" type="com.wky.feishuservice.model.po.LocationDO">
         <id property="id" column="id" jdbcType="BIGINT"/>
         <result property="locationName" column="location_name" jdbcType="VARCHAR"/>
@@ -13,7 +12,8 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,location_name,province,
+        id
+        ,location_name,province,
         longitude,latitude
     </sql>
 </mapper>

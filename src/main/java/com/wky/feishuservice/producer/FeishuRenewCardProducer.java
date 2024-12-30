@@ -53,7 +53,7 @@ public class FeishuRenewCardProducer {
                             put("Content-Type", "application/json; charset=utf-8");
                             put("Authorization", "Bearer " + accessToken);
                         }};
-                        HttpUtils.postForm( FeishuConstants.FEISHU_DELAY_UPDATE_CARD_URL, task.getBody(), headerParams);
+                        HttpUtils.postForm(FeishuConstants.FEISHU_DELAY_UPDATE_CARD_URL, task.getBody(), headerParams);
                     }
                 } catch (InterruptedException e) {
                     log.info("消费者被中断，退出循环");
