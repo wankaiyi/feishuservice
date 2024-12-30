@@ -30,37 +30,22 @@ public class NextQuestionProcessStrategy implements FeishuCardButtonStrategy {
     private final OpenAiClient openAiClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
+
     @Override
     public void handle(String openMessageId, FeishuCallbackResponseDTO response, String token, String question) {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
         //先发送消息给用户，告诉用户他问了什么问题
-        Map<String,Object> map=new HashMap<>();
-        map.put("text",question);
-        FeishuClient self = SpringUtil.getBean(FeishuClient.class);
+        Map<String, Object> map = new HashMap<>();
+        map.put("text", question);
         String format = String.format(defalutCard, JacksonUtils.serialize(map));
-        self.sendFeishuP2pMsg(format,receiveId,"open_id","interactive",null);
-        CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> {
-            ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, question);
-            return chatResponseBO;
-        }, openaiChatThreadPool);
-        CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
-            ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,question);
-            return predictNextQuestion;
-        }, openaiChatThreadPool);
-        CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
-            try {
-                ChatResponseBO chatResponseBO = aiTask.get();
-                feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", openMessageId);
-                ChatResponseBO predictNextQuestion = questionTask.get();
-                feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", openMessageId);
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }).join();
+        feishuClient.sendFeishuP2pMsg(format, receiveId, "open_id", "interactive", null);
+        //处理用户发起的问题
+        feishuMessageService.processUserQuestion(receiveId, question, receiveType, openMessageId);
     }
-    private String defalutCard= """
+
+    private String defalutCard = """
             {
                 "type":"template",
                 "data":{

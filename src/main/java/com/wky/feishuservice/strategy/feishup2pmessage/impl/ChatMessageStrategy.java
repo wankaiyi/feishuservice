@@ -8,6 +8,7 @@ import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
+import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategy;
 import com.wky.feishuservice.utils.UserInfoContext;
 import jakarta.annotation.Resource;
@@ -41,6 +42,7 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
     private final FeishuClient feishuClient;
     @Resource
     private ThreadPoolTaskExecutor openaiChatThreadPool;
+    private final FeishuMessageService feishuMessageService;
 
     @Override
     public void handleMessage(String contentText, String messageId) {
@@ -60,25 +62,8 @@ public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
                     while (!queue.isEmpty()) {
                         String text = queue.take();
                         try {
-
-                            CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> {
-                                ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, text);
-                                return chatResponseBO;
-                            }, openaiChatThreadPool);
-                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
-                                ChatResponseBO predictNextQuestion =openAiClient.getPredictNextQuestion(receiveId,text);
-                                return predictNextQuestion;
-                            }, openaiChatThreadPool);
-                            CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
-                                try {
-                                    ChatResponseBO chatResponseBO = aiTask.get();
-                                    feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
-                                    ChatResponseBO predictNextQuestion = questionTask.get();
-                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
-                                } catch (InterruptedException | ExecutionException e) {
-                                    throw new RuntimeException(e);
-                                }
-                            }).join();
+                            //处理用户发起的问题
+                            feishuMessageService.processUserQuestion(receiveId,text,receiveType,messageId);
                         } catch (OpenAiException e) {
                             log.error("获取chatgpt结果失败 error:", e);
                             feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));

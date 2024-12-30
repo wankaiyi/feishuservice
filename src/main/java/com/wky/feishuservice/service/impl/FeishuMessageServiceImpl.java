@@ -3,6 +3,7 @@ package com.wky.feishuservice.service.impl;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.client.FeishuClient;
+import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.constants.FeishuConstants;
 import com.wky.feishuservice.enumurations.FeishuCallbackActionTag;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
@@ -10,6 +11,7 @@ import com.wky.feishuservice.enumurations.ReceiveType;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.mapper.PromptMapper;
 import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
+import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
@@ -23,11 +25,13 @@ import com.wky.feishuservice.strategy.feishup2pmessage.FeishuP2pMessageStrategyF
 import com.wky.feishuservice.utils.RedisUtils;
 import com.wky.feishuservice.utils.SpringContextUtil;
 import com.wky.feishuservice.utils.UserInfoContext;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +40,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +58,9 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     private final RedissonClient redissonClient;
     private final PromptMapper promptMapper;
     private final FeishuClient feishuClient;
+    @Resource
+    private ThreadPoolTaskExecutor openaiChatThreadPool;
+    private final OpenAiClient openAiClient;
 
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
@@ -272,6 +281,22 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             newCard = String.format(newCardTemplate, promptDO.getAct(), promptId, promptId);
         }
         feishuClient.delayRenewCard(newCard, token);
+    }
+
+    @Override
+    public void processUserQuestion(String receiveId, String text, String receiveType, String messageId) {
+        CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, text), openaiChatThreadPool);
+        CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId,text), openaiChatThreadPool);
+        CompletableFuture.allOf(aiTask,questionTask).thenRun(()->{
+            try {
+                ChatResponseBO chatResponseBO = aiTask.get();
+                ChatResponseBO predictNextQuestion = questionTask.get();
+                feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", messageId);
+                feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", messageId);
+            } catch (InterruptedException | ExecutionException e) {
+                log.error("处理用户问题失败 error:", e);
+            }
+        }).join();
     }
 
     private void handleSelectStatic(String openId, String option, String openMessageId, FeishuCallbackResponseDTO response) {
