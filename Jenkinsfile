@@ -15,7 +15,7 @@ pipeline {
 
     environment {
         GIT_HTTP_VERSION = '1.1'
-        DOCKER_REPO = 'feishuservice:1.0'
+        DOCKER_REPO = 'feishuservice:2.0.0'
     }
 
     stages {
