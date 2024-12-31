@@ -66,7 +66,7 @@ public class OpenAiClient {
     @TimedExecution(methodDescription = "chatgpt对话")
     public ChatResponseBO chat(String openId, String text) {
         String apiKey = apiKeySelector.selectApiKey();
-        List<ChatRequestDTO.Message> messages = addMessageToCache(openId, text);
+        List<ChatRequestDTO.Message> messages = cacheAndGetMessages(openId, text);
         // 拼接提示词
         addPromptIfNeeded(messages, openId);
 
@@ -145,7 +145,7 @@ public class OpenAiClient {
         return JacksonUtils.deserialize(result, ChatResponseDTO.class);
     }
 
-    private List<ChatRequestDTO.Message> addMessageToCache(String openId, String text) {
+    private List<ChatRequestDTO.Message> cacheAndGetMessages(String openId, String text) {
         ChatRequestDTO.Message userMsg = new ChatRequestDTO.Message("user", text);
         chatMsgCache.addMsgCache(openId, userMsg);
         return chatMsgCache.getMsgCache(openId);
