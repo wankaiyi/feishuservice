@@ -13,7 +13,6 @@ openai:
 app:
   id: feishuservice
 apollo:
-  meta: http://${HOST}:8080
   bootstrap:
     enabled: true
     namespaces: application, redis, hefeng, openai, feishu, db

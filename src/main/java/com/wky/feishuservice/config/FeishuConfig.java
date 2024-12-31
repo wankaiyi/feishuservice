@@ -12,10 +12,10 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 public class FeishuConfig {
 
-    @Value("${feishu.openai.app.id:cli_a7bbd1060d10500d}")
+    @Value("${feishu.openai.app.id}")
     private String feishuOpenaiAppId;
 
-    @Value("${feishu.openai.app.secret:TEfOAwPNcENO1DWiE36PMcFxhFNbdsB8}")
+    @Value("${feishu.openai.app.secret}")
     private String feishuOpenaiAppSecret;
 
 }
