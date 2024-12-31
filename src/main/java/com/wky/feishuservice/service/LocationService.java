@@ -1,9 +1,8 @@
 package com.wky.feishuservice.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.wky.feishuservice.model.dto.WeatherResponseDTO;
+import com.wky.feishuservice.model.bo.WeatherInfoBO;
 import com.wky.feishuservice.model.po.LocationDO;
-import groovy.lang.Tuple2;
 
 /**
  * @author wky
@@ -11,5 +10,5 @@ import groovy.lang.Tuple2;
  */
 public interface LocationService extends IService<LocationDO> {
 
-    Tuple2<LocationDO, WeatherResponseDTO> getWeather(String locationName);
+    WeatherInfoBO getWeather(String locationName);
 }

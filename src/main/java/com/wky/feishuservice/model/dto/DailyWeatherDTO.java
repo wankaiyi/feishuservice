@@ -1,5 +1,6 @@
 package com.wky.feishuservice.model.dto;
 
+import com.wky.feishuservice.model.bo.WeatherInfoBO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,4 +49,20 @@ public class DailyWeatherDTO {
     private String vis;
     private String cloud;
     private String uvIndex;
+
+    public WeatherInfoBO.DailyWeather buildDailyWeather() {
+        WeatherInfoBO.DailyWeather dailyWeather = new WeatherInfoBO.DailyWeather();
+        dailyWeather.setFxDate(fxDate);
+        dailyWeather.setSunrise(sunrise);
+        dailyWeather.setSunset(sunset);
+        dailyWeather.setTempMax(tempMax);
+        dailyWeather.setTempMin(tempMin);
+        dailyWeather.setTextDay(textDay);
+        dailyWeather.setTextNight(textNight);
+        dailyWeather.setWindSpeedDay(windSpeedDay);
+        dailyWeather.setWindSpeedNight(windSpeedNight);
+        dailyWeather.setPrecip(precip);
+        dailyWeather.setVis(vis);
+        return dailyWeather;
+    }
 }

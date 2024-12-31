@@ -7,6 +7,7 @@ import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.exceptions.OpenAiException;
 import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
+import com.wky.feishuservice.model.bo.WeatherInfoBO;
 import com.wky.feishuservice.model.dto.ChatRequestDTO;
 import com.wky.feishuservice.model.dto.ChatResponseDTO;
 import com.wky.feishuservice.model.dto.ImageGenerateRequestDTO;
@@ -65,7 +66,7 @@ public class OpenAiClient {
     @TimedExecution(methodDescription = "chatgpt对话")
     public ChatResponseBO chat(String openId, String text) {
         String apiKey = apiKeySelector.selectApiKey();
-        List<ChatRequestDTO.Message> messages = addMessageToCache(openId, text);
+        List<ChatRequestDTO.Message> messages = cacheAndGetMessages(openId, text);
         // 拼接提示词
         addPromptIfNeeded(messages, openId);
 
@@ -144,7 +145,7 @@ public class OpenAiClient {
         return JacksonUtils.deserialize(result, ChatResponseDTO.class);
     }
 
-    private List<ChatRequestDTO.Message> addMessageToCache(String openId, String text) {
+    private List<ChatRequestDTO.Message> cacheAndGetMessages(String openId, String text) {
         ChatRequestDTO.Message userMsg = new ChatRequestDTO.Message("user", text);
         chatMsgCache.addMsgCache(openId, userMsg);
         return chatMsgCache.getMsgCache(openId);
@@ -209,5 +210,52 @@ public class OpenAiClient {
                 .setModel(response.getModel())
                 .setTotalTokens(response.getUsage().getTotalTokens())
                 .setPrice(price);
+    }
+
+    public static final String prompt = "我想让你作为一位天气分析师，我将多天的天气数据以JSON格式提供给你，你需要根据天气信息提供简短的生活建议，如“容易发生感冒，少去人群密集场所”、“白天温度适中，但早晚气温偏凉，建议携带外套”、“近期有降温趋势，出行注意保暖”、“近期天气较好，适合旅游或户外运动”等，不要超过50个字，使用中文回答，json数组的格式为[ {" +
+            "  \"fx_date\" : \"2024-12-30\"," +
+            "  \"sunrise\" : \"07:36\"," +
+            "  \"sunset\" : \"16:59\"," +
+            "  \"temp_max\" : \"7\"," +
+            "  \"temp_min\" : \"-5\"," +
+            "  \"text_day\" : \"晴\"," +
+            "  \"text_night\" : \"晴\"," +
+            "  \"wind_speed_day\" : \"16\"," +
+            "  \"wind_speed_night\" : \"3\"," +
+            "  \"precip\" : \"0.0\"," +
+            "  \"vis\" : \"25\"" +
+            "}, {" +
+            "  \"fx_date\" : \"2024-12-31\"," +
+            "  \"sunrise\" : \"07:37\"," +
+            "  \"sunset\" : \"16:59\"," +
+            "  \"temp_max\" : \"5\"," +
+            "  \"temp_min\" : \"-5\"," +
+            "  \"text_day\" : \"晴\"," +
+            "  \"text_night\" : \"晴\"," +
+            "  \"wind_speed_day\" : \"3\"," +
+            "  \"wind_speed_night\" : \"3\"," +
+            "  \"precip\" : \"0.0\"," +
+            "  \"vis\" : \"25\"" +
+            "}, {" +
+            "  \"fx_date\" : \"2025-01-01\"," +
+            "  \"sunrise\" : \"07:37\"," +
+            "  \"sunset\" : \"17:00\"," +
+            "  \"temp_max\" : \"6\"," +
+            "  \"temp_min\" : \"-5\"," +
+            "  \"text_day\" : \"晴\"," +
+            "  \"text_night\" : \"晴\"," +
+            "  \"wind_speed_day\" : \"3\"," +
+            "  \"wind_speed_night\" : \"16\"," +
+            "  \"precip\" : \"0.0\"," +
+            "  \"vis\" : \"25\"" +
+            "} ]，每个字段的意思分别是当天日期、日出时间、日落时间、最高温、最低温、白天天气描述、夜晚天气描述、白天风速、夜晚风速、降水量（单位毫米）、能见度（单位公里），返回格式必须为纯文本";
+
+    public String getWeatherSuggestion(List<WeatherInfoBO.DailyWeather> dailyWeathers) {
+        String question = JacksonUtils.serialize(dailyWeathers) + "分析这些天气并给我建议";
+        List<ChatRequestDTO.Message> messages = List.of(new ChatRequestDTO.Message("system", prompt), new ChatRequestDTO.Message("user", question));
+        ChatResponseDTO chatResponseDTO = processChatgptRequest(messages, apiKeySelector.selectApiKey());
+        String content = chatResponseDTO.getChoices()[0].getMessageResp().getContent();
+        System.out.println(content);
+        return content;
     }
 }

@@ -1,2 +1,6 @@
 apollo:
   meta: http://${HOST}:8080
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
