@@ -521,6 +521,17 @@ public class FeishuClient {
     }
 
     public String predictQuestionContent(ChatResponseBO chatResponseBO) {
+        //预测用户肯能使用的问题的模板
+        String predictQuestionCard = """
+            {
+                "type":"template",
+                "data":{
+                    "template_id":"AAqS7rtKi7JKR",
+                    "template_version_name":"1.0.1",
+                    "template_variable":%s
+                }
+            }
+            """;
         String content = chatResponseBO.getContent();
         if (content == null) {
             return "";
@@ -531,15 +542,4 @@ public class FeishuClient {
         return String.format(predictQuestionCard, JacksonUtils.serialize(Map.of("questions", questions)));
     }
 
-    //预测用户肯能使用的问题的模板
-    private String predictQuestionCard = """
-            {
-                "type":"template",
-                "data":{
-                    "template_id":"AAqS7rtKi7JKR",
-                    "template_version_name":"1.0.1",
-                    "template_variable":%s
-                }
-            }
-            """;
 }
