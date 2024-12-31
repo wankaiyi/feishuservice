@@ -45,12 +45,18 @@ CREATE TABLE "feishuservice"."location"
     "ad_code"       text COLLATE "pg_catalog"."default" NOT NULL
 )
 ;
-COMMENT ON COLUMN "feishuservice"."location"."location_name" IS '地区名，细化到区县';
-COMMENT ON COLUMN "feishuservice"."location"."province" IS '地区所属省或直辖市';
-COMMENT ON COLUMN "feishuservice"."location"."longitude" IS '经度';
-COMMENT ON COLUMN "feishuservice"."location"."latitude" IS '未读';
-COMMENT ON COLUMN "feishuservice"."location"."ad_code" IS '中国行政区域编码';
-COMMENT ON TABLE "feishuservice"."location" IS '地区表';
+COMMENT
+ON COLUMN "feishuservice"."location"."location_name" IS '地区名，细化到区县';
+COMMENT
+ON COLUMN "feishuservice"."location"."province" IS '地区所属省或直辖市';
+COMMENT
+ON COLUMN "feishuservice"."location"."longitude" IS '经度';
+COMMENT
+ON COLUMN "feishuservice"."location"."latitude" IS '未读';
+COMMENT
+ON COLUMN "feishuservice"."location"."ad_code" IS '中国行政区域编码';
+COMMENT
+ON TABLE "feishuservice"."location" IS '地区表';
 
 -- ----------------------------
 -- Records of location
@@ -7221,9 +7227,12 @@ CREATE TABLE "feishuservice"."prompts"
     "prompt" text COLLATE "pg_catalog"."default" NOT NULL
 )
 ;
-COMMENT ON COLUMN "feishuservice"."prompts"."id" IS '主键';
-COMMENT ON COLUMN "feishuservice"."prompts"."act" IS '职业，行为';
-COMMENT ON COLUMN "feishuservice"."prompts"."prompt" IS '提示词';
+COMMENT
+ON COLUMN "feishuservice"."prompts"."id" IS '主键';
+COMMENT
+ON COLUMN "feishuservice"."prompts"."act" IS '职业，行为';
+COMMENT
+ON COLUMN "feishuservice"."prompts"."prompt" IS '提示词';
 
 -- ----------------------------
 -- Records of prompts
@@ -7749,7 +7758,8 @@ CREATE TABLE "feishuservice"."user_prompt"
     "prompt_id" int8                                NOT NULL
 )
 ;
-COMMENT ON TABLE "feishuservice"."user_prompt" IS '用户设置的常用提示词，一个用户只能有一个';
+COMMENT
+ON TABLE "feishuservice"."user_prompt" IS '用户设置的常用提示词，一个用户只能有一个';
 
 -- ----------------------------
 -- Records of user_prompt
@@ -7770,11 +7780,16 @@ CREATE TABLE "feishuservice"."user_prompt_submissions"
     "is_submitted" int2                                NOT NULL DEFAULT 0
 )
 ;
-COMMENT ON COLUMN "feishuservice"."user_prompt_submissions"."id" IS '主键id';
-COMMENT ON COLUMN "feishuservice"."user_prompt_submissions"."message_id" IS '消息id，唯一标识一个表单';
-COMMENT ON COLUMN "feishuservice"."user_prompt_submissions"."open_id" IS '飞书用户的open_id';
-COMMENT ON COLUMN "feishuservice"."user_prompt_submissions"."prompt_id" IS '用户选择的提示词的id';
-COMMENT ON COLUMN "feishuservice"."user_prompt_submissions"."is_submitted" IS '是否已提交，0，未提交；1，已提交';
+COMMENT
+ON COLUMN "feishuservice"."user_prompt_submissions"."id" IS '主键id';
+COMMENT
+ON COLUMN "feishuservice"."user_prompt_submissions"."message_id" IS '消息id，唯一标识一个表单';
+COMMENT
+ON COLUMN "feishuservice"."user_prompt_submissions"."open_id" IS '飞书用户的open_id';
+COMMENT
+ON COLUMN "feishuservice"."user_prompt_submissions"."prompt_id" IS '用户选择的提示词的id';
+COMMENT
+ON COLUMN "feishuservice"."user_prompt_submissions"."is_submitted" IS '是否已提交，0，未提交；1，已提交';
 
 -- ----------------------------
 -- Records of user_prompt_submissions
@@ -7827,10 +7842,10 @@ SELECT setval('"feishuservice"."user_prompt_submissions_id_seq"', 11, true);
 -- Indexes structure for table location
 -- ----------------------------
 CREATE INDEX "location_location_name_index" ON "feishuservice"."location" USING btree (
-                                                                                       "location_name"
-                                                                                       COLLATE "pg_catalog"."default"
-                                                                                       "pg_catalog"."text_ops" ASC NULLS
-                                                                                       LAST
+    "location_name"
+    COLLATE "pg_catalog"."default"
+    "pg_catalog"."text_ops" ASC NULLS
+    LAST
     );
 
 -- ----------------------------
@@ -7849,10 +7864,10 @@ ALTER TABLE "feishuservice"."prompts"
 -- Indexes structure for table user_prompt
 -- ----------------------------
 CREATE UNIQUE INDEX "user_prompt_open_id_uindex" ON "feishuservice"."user_prompt" USING btree (
-                                                                                               "open_id"
-                                                                                               COLLATE "pg_catalog"."default"
-                                                                                               "pg_catalog"."text_ops"
-                                                                                               ASC NULLS LAST
+    "open_id"
+    COLLATE "pg_catalog"."default"
+    "pg_catalog"."text_ops"
+    ASC NULLS LAST
     );
 
 -- ----------------------------
@@ -7865,26 +7880,26 @@ ALTER TABLE "feishuservice"."user_prompt"
 -- Indexes structure for table user_prompt_submissions
 -- ----------------------------
 CREATE INDEX "user_prompt_submissions_is_submitted_index" ON "feishuservice"."user_prompt_submissions" USING btree (
-                                                                                                                    "is_submitted"
-                                                                                                                    "pg_catalog"."int2_ops"
-                                                                                                                    ASC
-                                                                                                                    NULLS
-                                                                                                                    LAST
+    "is_submitted"
+    "pg_catalog"."int2_ops"
+    ASC
+    NULLS
+    LAST
     );
 CREATE UNIQUE INDEX "user_prompt_submissions_message_id_uindex" ON "feishuservice"."user_prompt_submissions" USING btree (
-                                                                                                                          "message_id"
-                                                                                                                          COLLATE "pg_catalog"."default"
-                                                                                                                          "pg_catalog"."text_ops"
-                                                                                                                          ASC
-                                                                                                                          NULLS
-                                                                                                                          LAST
+    "message_id"
+    COLLATE "pg_catalog"."default"
+    "pg_catalog"."text_ops"
+    ASC
+    NULLS
+    LAST
     );
 CREATE INDEX "user_prompt_submissions_open_id_index" ON "feishuservice"."user_prompt_submissions" USING btree (
-                                                                                                               "open_id"
-                                                                                                               COLLATE "pg_catalog"."default"
-                                                                                                               "pg_catalog"."text_ops"
-                                                                                                               ASC NULLS
-                                                                                                               LAST
+    "open_id"
+    COLLATE "pg_catalog"."default"
+    "pg_catalog"."text_ops"
+    ASC NULLS
+    LAST
     );
 
 -- ----------------------------

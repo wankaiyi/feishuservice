@@ -35,10 +35,10 @@ public class WeightedRoundRobinStrategy implements ApiKeySelectionStrategy {
             if #api_keys == 0 then
                 return nil
             end
-            
+                        
             local total_weight = 0
             local weighted_keys = {}
-            
+                        
             for i = 1, #api_keys, 2 do
                 local key = api_keys[i]
                 local weight = tonumber(api_keys[i + 1])
@@ -47,9 +47,9 @@ public class WeightedRoundRobinStrategy implements ApiKeySelectionStrategy {
                     table.insert(weighted_keys, {key = key, weight = weight})
                 end
             end
-            
+                        
             local random_choice = math.random() * total_weight
-            
+                        
             local cumulative_weight = 0
             for _, entry in ipairs(weighted_keys) do
                 cumulative_weight = cumulative_weight + entry.weight
@@ -57,7 +57,7 @@ public class WeightedRoundRobinStrategy implements ApiKeySelectionStrategy {
                     return entry.key
                 end
             end
-            
+                        
             return nil
             """;
 

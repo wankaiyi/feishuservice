@@ -12,7 +12,8 @@
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,location_name,province,
+        id
+        ,location_name,province,
         longitude,latitude
     </sql>
 </mapper>

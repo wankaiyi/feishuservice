@@ -38,7 +38,7 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
         if (weather == null) {
             throw new FeishuP2pException("未找到该地区", receiveId, receiveType);
         }
-        feishuClient.handelWeather(weather, receiveId, receiveType, "interactive");
+        feishuClient.handleWeather(weather, receiveId, receiveType, "interactive");
     }
 
     @Override

@@ -15,4 +15,6 @@ public interface FeishuMessageService {
     FeishuCallbackResponseDTO processFeishuCallback(FeishuCallbackRequestDTO feishuCallbackRequestDTO);
 
     void delayRenewCardAsync(Long promptId, String token);
+
+    void processUserQuestion(String receiveId, String text, String receiveType, String messageId);
 }
