@@ -92,16 +92,17 @@ public class OpenAiClient {
 
     private void addPromptIfNeeded(List<ChatRequestDTO.Message> messages, String openId) {
         String prompt = userPromptMapper.selectUserPrompt(openId);
+        List<ChatRequestDTO.Message> promptMessages = new ArrayList<>();
         if (Strings.isNotBlank(prompt)) {
-            messages.add(0, new ChatRequestDTO.Message("system", prompt));
+            promptMessages.add(new ChatRequestDTO.Message("system", prompt));
         }
-        messages.addAll(
-                1,
+        promptMessages.addAll(
                 List.of(
                         new ChatRequestDTO.Message("user", "使用中文回答所有问题"),
                         new ChatRequestDTO.Message("assistant", "好的，了解")
                 )
         );
+        messages.addAll(0, promptMessages);
     }
 
     private void cacheMsg(String openId, String resContent) {
