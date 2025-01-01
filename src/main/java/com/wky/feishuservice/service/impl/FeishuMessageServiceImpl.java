@@ -308,7 +308,6 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                         ChatMessageBo chatMessageBo = JacksonUtils.deserialize(chatMessageBoStr, ChatMessageBo.class);
                         String question = chatMessageBo.getText();
                         try {
-                            log.info("多线程的messageId:{}", messageId);
                             CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, question), openaiChatThreadPool);
                             CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId, question), openaiChatThreadPool);
                             CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
@@ -316,7 +315,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                                     ChatResponseBO chatResponseBO = aiTask.get();
                                     ChatResponseBO predictNextQuestion = questionTask.get();
                                     FeishuP2pResponseDTO feishuP2pResponseDTO = feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId());
-                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion, receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
+                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion.getContent(), receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
                                 } catch (InterruptedException | ExecutionException e) {
                                     log.error("处理用户问题失败 error:", e);
                                 }

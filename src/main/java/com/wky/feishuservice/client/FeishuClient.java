@@ -514,13 +514,12 @@ public class FeishuClient {
         sendFeishuP2pMsg(getContent("机器人上下文已重置"), receiveId, receiveType, "text", messageId);
     }
 
-    //
-    public void sendP2PPredictQuestion(ChatResponseBO chatResponseBO, String receiveId, String receiveIdType, String msgType, String messageId) {
+    public void sendP2PPredictQuestion(String nextQuestionsStr, String receiveId, String receiveIdType, String msgType, String messageId) {
         FeishuClient self = SpringUtil.getBean(FeishuClient.class);
-        self.sendFeishuP2pMsg(predictQuestionContent(chatResponseBO), receiveId, receiveIdType, msgType, messageId);
+        self.sendFeishuP2pMsg(getNextQuestionsCard(nextQuestionsStr), receiveId, receiveIdType, msgType, messageId);
     }
 
-    public String predictQuestionContent(ChatResponseBO chatResponseBO) {
+    public String getNextQuestionsCard(String nextQuestionsStr) {
         //预测用户肯能使用的问题的模板
         String predictQuestionCard = """
             {
@@ -532,12 +531,13 @@ public class FeishuClient {
                 }
             }
             """;
-        String content = chatResponseBO.getContent();
-        if (content == null) {
+        if (StringUtils.isEmpty(nextQuestionsStr) || StringUtils.equals(nextQuestionsStr, "无")) {
+            log.info("没有下一个问题：{}", nextQuestionsStr);
             return "";
         }
         //将问题字符串根据空格分割
-        String[] questionSplitList = content.split("\n");
+        String[] questionSplitList = nextQuestionsStr.split("\n");
+        log.info("预测用户可能使用的问题：{}", Arrays.toString(questionSplitList));
         List<Map<String, String>> questions = Arrays.stream(questionSplitList).map(question -> Map.of("question", question)).toList();
         return String.format(predictQuestionCard, JacksonUtils.serialize(Map.of("questions", questions)));
     }
