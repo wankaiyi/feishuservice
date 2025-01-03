@@ -19,11 +19,19 @@
 - 天气查询：通过和风天气API获取未来三天天气预报，为用户的日常生活和出行计划提供参考。
 
 ### 项目演示
+#### 对话补全（聊天） + 智能分析用户下一个问题
+![image](https://github.com/user-attachments/assets/f726e769-d83b-4946-aed2-567945e21590)
 
-![image](https://github.com/user-attachments/assets/de9ec611-6482-4ce4-b0f7-52aa461fd583)
+#### 文生图
 ![image](https://github.com/user-attachments/assets/44f64406-b2d2-4e29-a0fd-3eb4fa6be98d)
+
+#### 配置默认提示词
 ![image](https://github.com/user-attachments/assets/d5a69488-44c7-48e1-91c5-814955aff5f5)
-![image](https://github.com/user-attachments/assets/284eec53-fbd5-45d2-b1df-88a21c244208)
+
+#### 智能分析近三天天气
+![image](https://github.com/user-attachments/assets/6e8e45cf-cfbc-4f9e-9e29-f6b3664f00e4)
+
+#### 重置机器人上下文
 ![image](https://github.com/user-attachments/assets/eee86576-b71f-4096-88a0-edf85e11b964)
 
 ### 技术选型
