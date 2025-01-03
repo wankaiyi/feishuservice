@@ -1,5 +1,5 @@
 apollo:
-  meta: http://${HOST}:8081
+  meta: http://${HOST}:7080
 
 logging:
   config: classpath:logback-prod.xml
