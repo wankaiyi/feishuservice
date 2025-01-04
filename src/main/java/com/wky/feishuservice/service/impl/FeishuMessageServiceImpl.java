@@ -38,6 +38,7 @@ import org.redisson.api.RBlockingQueue;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +60,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class FeishuMessageServiceImpl implements FeishuMessageService {
+    /**
+     * 事件重复处理的key的过期时间
+     */
+    @Value("${feishu.event.duplcation.expire.time:3600000}")
+    private long eventHandlerExpireTime;
 
     private final RedisUtils redisUtils;
     private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
@@ -118,7 +124,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
             log.info("事件重复，不处理，eventId: {}", eventId);
             return;
         } else {
-            redisUtils.expire(eventKey, 60 * 60 * 1000, TimeUnit.MILLISECONDS);
+            redisUtils.expire(eventKey, eventHandlerExpireTime, TimeUnit.MILLISECONDS);
         }
         String actionTag = feishuCallbackRequestDTO.getEvent().getAction().getTag();
         String openId = UserInfoContext.getUserInfo().getReceiveId();
