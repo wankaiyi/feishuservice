@@ -25,6 +25,7 @@ import com.wky.feishuservice.utils.RedisUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -52,6 +53,11 @@ import static com.wky.feishuservice.constants.FeishuConstants.FEISHU_OPENAI_REDI
 @RequiredArgsConstructor
 @Slf4j
 public class FeishuClient {
+    /**
+     * tenant令牌过期时间
+     */
+    @Value("${feishu.tenant.token.expire.time:5400000}")
+    private long tenantExpireTime;
 
     private final RedisUtils redisUtils;
     private final PromptMapper promptMapper;
@@ -107,7 +113,7 @@ public class FeishuClient {
             JSONObject jsonObject = JSONObject.parseObject(result);
             if (Objects.nonNull(jsonObject)) {
                 accessToken = jsonObject.getString("tenant_access_token");
-                redisUtils.set("tenantAccessToken", accessToken, 90 * 60 * 1000, TimeUnit.MILLISECONDS);
+                redisUtils.set("tenantAccessToken", accessToken, tenantExpireTime, TimeUnit.MILLISECONDS);
             }
         }
         return accessToken;
@@ -522,15 +528,15 @@ public class FeishuClient {
     public String getNextQuestionsCard(String nextQuestionsStr) {
         //预测用户肯能使用的问题的模板
         String predictQuestionCard = """
-            {
-                "type":"template",
-                "data":{
-                    "template_id":"AAqS7rtKi7JKR",
-                    "template_version_name":"1.0.1",
-                    "template_variable":%s
+                {
+                    "type":"template",
+                    "data":{
+                        "template_id":"AAqS7rtKi7JKR",
+                        "template_version_name":"1.0.1",
+                        "template_variable":%s
+                    }
                 }
-            }
-            """;
+                """;
         if (StringUtils.isEmpty(nextQuestionsStr) || StringUtils.equals(nextQuestionsStr, "无")) {
             log.info("没有下一个问题：{}", nextQuestionsStr);
             return "";

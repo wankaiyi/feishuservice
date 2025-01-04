@@ -18,4 +18,10 @@ public class FeishuConfig {
     @Value("${feishu.openai.app.secret}")
     private String feishuOpenaiAppSecret;
 
+    /**
+     * 飞书告警webhook地址
+     */
+    @Value("${feishu.alert.webhook.url}")
+    private String feishuAlertWebHookUrl;
+
 }

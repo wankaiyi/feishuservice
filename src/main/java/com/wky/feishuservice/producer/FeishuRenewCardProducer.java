@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBlockingDeque;
 import org.redisson.api.RDelayedQueue;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -27,6 +28,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 @Slf4j
 public class FeishuRenewCardProducer {
+    /**
+     * 更新卡片队列的延迟时间
+     */
+    @Value("${feishu.renewCard.queue.pollTime:10}")
+    private long renewCardQueuePollTime;
 
     private final RedissonClient redissonClient;
 
@@ -42,7 +48,7 @@ public class FeishuRenewCardProducer {
             while (true) {
                 FeishuDelayRenewCardBO task;
                 try {
-                    String pollTask = queue.poll(10, TimeUnit.SECONDS);
+                    String pollTask = queue.poll(renewCardQueuePollTime, TimeUnit.SECONDS);
                     if (Objects.isNull(pollTask)) {
                         continue;
                     }
