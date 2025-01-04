@@ -1,7 +1,6 @@
 package com.wky.feishuservice.strategy.feishucardbutton.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
-import com.wky.feishuservice.client.OpenAiClient;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
@@ -10,9 +9,7 @@ import com.wky.feishuservice.service.FeishuMessageService;
 import com.wky.feishuservice.strategy.feishucardbutton.FeishuCardButtonStrategy;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.UserInfoContext;
-import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -23,9 +20,6 @@ import java.util.Map;
 public class NextQuestionProcessStrategy implements FeishuCardButtonStrategy {
     private final FeishuMessageService feishuMessageService;
     private final FeishuClient feishuClient;
-    private final OpenAiClient openAiClient;
-    @Resource
-    private ThreadPoolTaskExecutor openaiChatThreadPool;
 
     @Override
     public void handle(String openMessageId, FeishuCallbackResponseDTO response, String token, String question) {

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * 参考<a href="https://openai.apifox.cn/doc-2653713">OpenAI Apifox文档</a>
@@ -132,14 +133,15 @@ public class OpenAiClient {
     }
 
     private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey) {
+        String uuid = UUID.randomUUID().toString();
         ChatRequestDTO chatRequestDTO = new ChatRequestDTO(GPT_4_O_MODEL, messages);
         String data = JacksonUtils.serialize(chatRequestDTO);
-        log.info("请求OpenAI接口，请求体：{}", data);
+        log.info("请求OpenAI接口，请求体：{}，uuid:{}", data, uuid);
         // 接口超时会导致返回null
         String result = HttpUtils.postForm(OpenAiConstants.CHAT_URL, data, HEADER_PARAMS_MAPS.get(apiKey), new HashMap<>() {{
             put("model", GPT_4_O_MODEL);
         }});
-        log.info("OpenAI接口返回结果: {}", result);
+        log.info("OpenAI接口返回结果: {}，uuid:{}", result, uuid);
         if (Objects.isNull(result)) {
             throw new OpenAiException("openai接口异常，请查看日志");
         }
