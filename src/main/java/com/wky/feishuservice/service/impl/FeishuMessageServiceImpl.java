@@ -78,6 +78,9 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
         log.info("接收到飞书事件，请求体：{}", feishuP2pChatDTO);
+        if (true) {
+            throw new RuntimeException("测试异常");
+        }
         JSONObject res = null;
         if (StringUtils.equals("url_verification", feishuP2pChatDTO.getType())) {
             res = new JSONObject();
