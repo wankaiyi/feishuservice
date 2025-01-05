@@ -77,6 +77,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     @Override
     public JSONObject processFeishuNotice(FeishuP2pChatDTO feishuP2pChatDTO) {
+        log.info("接收到飞书事件，请求体：{}", feishuP2pChatDTO);
         JSONObject res = null;
         if (StringUtils.equals("url_verification", feishuP2pChatDTO.getType())) {
             res = new JSONObject();
@@ -90,6 +91,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
 
     @Override
     public FeishuCallbackResponseDTO processFeishuCallback(FeishuCallbackRequestDTO feishuCallbackRequestDTO) {
+        log.info("接收到飞书回调，请求体：{}", feishuCallbackRequestDTO);
         FeishuCallbackResponseDTO response = new FeishuCallbackResponseDTO();
         if (StringUtils.equals("url_verification", feishuCallbackRequestDTO.getType())) {
             response.setChallenge(feishuCallbackRequestDTO.getChallenge());
