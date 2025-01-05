@@ -3,3 +3,5 @@ apollo:
 
 logging:
   config: classpath:logback-prod.xml
+
+env: prod

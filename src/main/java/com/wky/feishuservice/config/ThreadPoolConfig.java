@@ -45,6 +45,22 @@ public class ThreadPoolConfig {
         return executor;
     }
 
+    /**
+     * feishu webhook 发送线程池
+     */
+    @Bean(name = "feishuWebhookPoolTaskExecutor")
+    public ThreadPoolTaskExecutor feishuWebhookPoolTaskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setMaxPoolSize(5);
+        executor.setCorePoolSize(2);
+        executor.setQueueCapacity(1000);
+        executor.setKeepAliveSeconds(60);
+        executor.setThreadNamePrefix("feishu-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.initialize();
+        return executor;
+    }
+
     public static String doPrintThreadPoolConfig(ThreadPoolExecutor threadPoolExecutor) {
         int corePoolSize = threadPoolExecutor.getCorePoolSize();
         int maximumPoolSize = threadPoolExecutor.getMaximumPoolSize();
