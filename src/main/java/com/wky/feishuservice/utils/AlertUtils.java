@@ -22,7 +22,7 @@ public class AlertUtils {
             {
                 "msg_type": "text",
                 "content": {
-                    "text": %s
+                    "text": "%s"
                 }
             }
             """;
