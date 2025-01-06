@@ -2,7 +2,9 @@ package com.wky.feishuservice.utils;
 
 import cn.hutool.extra.spring.SpringUtil;
 import com.wky.feishuservice.config.FeishuConfig;
+import com.wky.feishuservice.model.dto.FeishuAlertDTO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 
@@ -40,12 +42,22 @@ public class AlertUtils {
     /**
      * 异常告警
      */
-    public static String sendErrorAlert(String errorMsg) {
-        String feishuAlertWebHookUrl = feishuConfig.getFeishuAlertWebHookUrl();
+    public static String sendErrorAlert(String errorMsg, String alertUrl) {
         String body = String.format(ALERT_TEMPLATE, JacksonUtils.serialize(errorMsg));
-        String result = HttpUtils.postForm(feishuAlertWebHookUrl, body, HEADERS_PARAMS);
-        log.info("服务异常告警，url：{}，请求体：{}， 响应：{}", feishuAlertWebHookUrl, body, result);
+        String webhookUrl = StringUtils.isBlank(alertUrl)
+                ? feishuConfig.getFeishuAlertWebHookUrl()
+                : alertUrl;
+        String result = HttpUtils.postForm(webhookUrl, body, HEADERS_PARAMS);
+        log.info("服务异常告警，url：{}，请求体：{}， 响应：{}", webhookUrl, body, result);
         return result;
+    }
+
+    public static String sendErrorAlert(FeishuAlertDTO feishuAlertDTO) {
+        String token = feishuAlertDTO.getToken();
+        if (!StringUtils.equals(token, feishuConfig.getFeishuAlertToken())) {
+            return "身份认证失败";
+        }
+        return sendErrorAlert(feishuAlertDTO.getMessage(), feishuAlertDTO.getAlertUrl());
     }
 
 }
