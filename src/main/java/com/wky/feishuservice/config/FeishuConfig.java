@@ -24,4 +24,7 @@ public class FeishuConfig {
     @Value("${feishu.alert.webhook.url}")
     private String feishuAlertWebHookUrl;
 
+    @Value("${feishu.alert.token}")
+    private String feishuAlertToken;
+
 }
