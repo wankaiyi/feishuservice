@@ -55,8 +55,8 @@
 | Apollo     | 配置中心             |
 
 ### 架构图
+![image](https://github.com/user-attachments/assets/635a7586-1d56-47d6-b196-d44c67a92ae4)
 
-![image](https://github.com/user-attachments/assets/8d73a2de-d237-40ad-8456-4d341450294c)
 
 ### 开发环境
 
