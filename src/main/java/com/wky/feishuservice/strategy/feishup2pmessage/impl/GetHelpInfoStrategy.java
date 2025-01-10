@@ -46,7 +46,7 @@ public class GetHelpInfoStrategy implements FeishuP2pMessageStrategy {
     public boolean isMatch(String contentText) {
         boolean match = StringUtils.startsWith(contentText, PREFIX);
         if (match) {
-            log.info("匹配到线程池快照查询策略");
+            log.info("匹配到查看帮助列表策略");
         }
         return match;
     }
