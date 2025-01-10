@@ -275,16 +275,25 @@ public class FeishuClient {
 
     public String uploadImage(String base64, String receiveId, String receiveType) {
         String accessToken = getTenantAccessToken();
-        String result = HttpUtils.postFormData(FeishuConstants.FEISHU_UPLOAD_IMAGE_URL, new HashMap<>() {{
-                    put("image", convertBase64ToTempFile(base64));
-                }},
-                new HashMap<>() {{
-                    put("Authorization", "Bearer " + accessToken);
-                    put("Content-Type", "multipart/form-data");
-                }},
-                new HashMap<>() {{
-                    put("image_type", "message");
-                }});
+        File base64ToTempFile;
+        try {
+            base64ToTempFile = convertBase64ToTempFile(base64);
+        } catch (IOException e) {
+            log.error("base64 字符串转临时文件失败， base64: {}", base64, e);
+            throw new FeishuP2pException("飞书获取图片失败", receiveId, receiveType);
+        }
+
+        String result = HttpUtils.postFormData(FeishuConstants.FEISHU_UPLOAD_IMAGE_URL,
+                Map.of(
+                        "image", base64ToTempFile
+                ),
+                Map.of(
+                        "Authorization", "Bearer " + accessToken,
+                        "Content-Type", "multipart/form-data"
+                ),
+                Map.of(
+                        "image_type", "message"
+                ));
         FeishuUploadResponseDTO response = JacksonUtils.deserialize(result, FeishuUploadResponseDTO.class);
         if (response.getCode() != 0) {
             log.error("飞书上传图片失败，result: {}", result);
@@ -293,24 +302,19 @@ public class FeishuClient {
         return response.getData().getImageKey();
     }
 
-    public static File convertBase64ToTempFile(String base64Str) {
-        try {
-            // 解码 base64 字符串为字节数组
-            byte[] decodedBytes = Base64.getDecoder().decode(base64Str);
+    public static File convertBase64ToTempFile(String base64Str) throws IOException {
+        // 解码 base64 字符串为字节数组
+        byte[] decodedBytes = Base64.getDecoder().decode(base64Str);
 
-            // 创建临时文件。系统会自动在默认的临时目录下创建该文件。
-            File tempFile = Files.createTempFile("image_", ".png").toFile();
+        // 创建临时文件。系统会自动在默认的临时目录下创建该文件。
+        File tempFile = Files.createTempFile("image_", ".png").toFile();
 
-            // 将字节写入临时文件
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                fos.write(decodedBytes);
-            }
-
-            return tempFile;
-        } catch (IOException e) {
-            log.error("base64 字符串转临时文件失败， base64Str: {}", base64Str, e);
-            return null;
+        // 将字节写入临时文件
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            fos.write(decodedBytes);
         }
+
+        return tempFile;
     }
 
     public void sendImageMessage(String imageKey, String receiveId, String receiveType, String messageId) {
