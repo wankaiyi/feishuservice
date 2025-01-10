@@ -22,21 +22,22 @@ import org.springframework.stereotype.Component;
 public class GetHelpInfoStrategy implements FeishuP2pMessageStrategy {
     public static final String PREFIX = FeishuP2pPrefix.GET_HELP_INFO.getPrefix();
     private final FeishuClient feishuClient;
-    private final String HELP_INFO_TIP= """
-            指令列表
-            #image 文生图
-            #reset 重置上下文
-            #天气   查询天气
-            #tp    查看线程池快照
-            #配置   配置上下文
-            #help  列出可用的指令列表
-            """;
+
     @Override
     public void handleMessage(String contentText, String messageId) {
         UserInfo userInfo = UserInfoContext.getUserInfo();
         String receiveId = userInfo.getReceiveId();
         String receiveType = userInfo.getReceiveType();
         ChatResponseBO chatResponseBO=new ChatResponseBO();
+        String HELP_INFO_TIP = """
+                指令列表
+                #image 文生图
+                #reset 重置上下文
+                #天气   查询天气
+                #tp    查看线程池快照
+                #配置   配置上下文
+                #help  列出可用的指令列表
+                """;
         chatResponseBO.setContent(HELP_INFO_TIP);
         feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType,"post", messageId);
     }
