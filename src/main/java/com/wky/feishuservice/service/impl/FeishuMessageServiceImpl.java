@@ -65,6 +65,8 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
      */
     @Value("${feishu.event.duplcation.expire.time:3600000}")
     private long eventHandlerExpireTime;
+    @Value("${feishu.predictQuestion.enable:false}")
+    private boolean predictQuestion;
 
     private final RedisUtils redisUtils;
     private final UserPromptSubmissionsMapper userPromptSubmissionsMapper;
@@ -317,13 +319,20 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                         String question = chatMessageBo.getText();
                         try {
                             CompletableFuture<ChatResponseBO> aiTask = CompletableFuture.supplyAsync(() -> openAiClient.chat(receiveId, question), openaiChatThreadPool);
-                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> openAiClient.getPredictNextQuestion(receiveId, question), openaiChatThreadPool);
+                            CompletableFuture<ChatResponseBO> questionTask = CompletableFuture.supplyAsync(() -> {
+                                if (predictQuestion){
+                                   return openAiClient.getPredictNextQuestion(receiveId, question);
+                                }
+                                return null;
+                            }, openaiChatThreadPool);
                             CompletableFuture.allOf(aiTask, questionTask).thenRun(() -> {
                                 try {
                                     ChatResponseBO chatResponseBO = aiTask.get();
                                     ChatResponseBO predictNextQuestion = questionTask.get();
                                     FeishuP2pResponseDTO feishuP2pResponseDTO = feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId());
-                                    feishuClient.sendP2PPredictQuestion(predictNextQuestion.getContent(), receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
+                                    if (predictQuestion){
+                                        feishuClient.sendP2PPredictQuestion(predictNextQuestion.getContent(), receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
+                                    }
                                 } catch (InterruptedException | ExecutionException e) {
                                     log.error("处理用户问题失败 error:", e);
                                 }
