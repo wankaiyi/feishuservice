@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wky.feishuservice.client.HefengWeatherClient;
 import com.wky.feishuservice.client.OpenAiClient;
+import com.wky.feishuservice.constants.NullObjectConstants;
 import com.wky.feishuservice.mapper.LocationMapper;
 import com.wky.feishuservice.model.bo.WeatherInfoBO;
 import com.wky.feishuservice.model.dto.DailyWeatherDTO;
@@ -34,13 +35,13 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationDO>
     @Override
     public WeatherInfoBO getWeather(String locationName) {
         if (StringUtils.isBlank(locationName)) {
-            return null;
+            return NullObjectConstants.NULL_WEATHER_INFO_BO;
         }
         List<LocationDO> locationDOS = locationMapper.selectList(new LambdaQueryWrapper<LocationDO>()
                 .likeRight(LocationDO::getLocationName, locationName));
         if (locationDOS.isEmpty()) {
             log.info("未查询到地区，locationName:{}", locationName);
-            return null;
+            return NullObjectConstants.NULL_WEATHER_INFO_BO;
         }
         LocationDO location = locationDOS.get(0);
         WeatherResponseDTO weather = hefengWeatherClient.getWeather(location.getId());

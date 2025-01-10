@@ -1,6 +1,7 @@
 package com.wky.feishuservice.strategy.feishup2pmessage.impl;
 
 import com.wky.feishuservice.client.FeishuClient;
+import com.wky.feishuservice.constants.NullObjectConstants;
 import com.wky.feishuservice.enumurations.FeishuP2pPrefix;
 import com.wky.feishuservice.exceptions.FeishuP2pException;
 import com.wky.feishuservice.model.bo.WeatherInfoBO;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+
+import java.util.Objects;
 
 /**
  * 处理查询天气消息策略
@@ -35,7 +38,7 @@ public class WeatherMessageStrategy implements FeishuP2pMessageStrategy {
         // 只保留中文字符
         String location = contentText.substring(3).replaceAll("[^\\u4e00-\\u9fa5]", "");
         WeatherInfoBO weather = locationService.getWeather(location);
-        if (weather == null) {
+        if (Objects.equals(weather, NullObjectConstants.NULL_WEATHER_INFO_BO)) {
             throw new FeishuP2pException("未找到该地区", receiveId, receiveType);
         }
         feishuClient.handleWeather(weather, receiveId, receiveType, "interactive");
