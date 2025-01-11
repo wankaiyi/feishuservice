@@ -18,7 +18,8 @@ public enum FeishuP2pPrefix {
     REFRESH_MEMORY("#reset"),
     WEATHER("#天气"),
     THREAD_POOL_INFO("#tp"),
-    GET_PROMPT_CONFIG("#配置");
+    GET_PROMPT_CONFIG("#配置"),
+    GET_HELP_INFO("#help");
 
     private final String prefix;
 
