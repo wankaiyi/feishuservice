@@ -35,11 +35,6 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public class ChatMessageStrategy implements FeishuP2pMessageStrategy {
 
-    private final RedissonClient redissonClient;
-    private final OpenAiClient openAiClient;
-    private final FeishuClient feishuClient;
-    @Resource
-    private ThreadPoolTaskExecutor openaiChatThreadPool;
     private final FeishuMessageService feishuMessageService;
 
     @Override
