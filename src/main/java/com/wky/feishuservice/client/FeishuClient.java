@@ -176,101 +176,101 @@ public class FeishuClient {
     }
 
 
-    private String getContent(WeatherInfoBO weather) {
-        List<WeatherInfoBO.DailyWeather> dailyWeathers = weather.getDailyWeathers();
-        String cardHeader = """
-                {
-                    "config": {
-                        "wide_screen_mode": true
-                    },
-                    "header": {
-                        "title": {
-                            "tag": "plain_text",
-                            "content": "%s"
-                        }
-                    },
-                    "elements": [
-                        { "tag": "div", "fields": [
-                            { "is_short": false, "text": { "tag": "plain_text", "content": "近3天天气预报：" } }
-                        ] },
-                        { "tag": "hr" },
-                """;
+    public String getContent(WeatherInfoBO weather) {
+        if (weather == null || weather.getDailyWeathers() == null) {
+            return "{}"; // 处理空的weather对象
+        }
 
-        StringBuilder cardBuilder = new StringBuilder(String.format(cardHeader, "\uD83C\uDF24️ 天气预报 - " + weather.getLocationName()));
+        String cardHeader = getCardHeader(weather.getLocationName());
+        StringBuilder cardBuilder = new StringBuilder(cardHeader);
 
-        String weatherTemplate = """
-                    { "tag": "div", "fields": [
-                        { "is_short": false, "text": { "tag": "lark_md", "content": "**📅 日期**: %s" } }
-                    ] },
-                    { "tag": "div", "fields": [
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌅 日出**: %s" } },
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌇 日落**: %s" } }
-                    ] },
-                    { "tag": "div", "fields": [
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌡️ 最高温**: %s°C" } },
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**❄️ 最低温**: %s°C" } }
-                    ] },
-                    { "tag": "div", "fields": [
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**💧 降水量**: %s mm" } },
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**👁️ 能见度**: %s km" } }
-                    ] },
-                    { "tag": "div", "fields": [
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌬️ 白天风速**: %s km/h" } },
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌙 夜晚风速**: %s km/h" } }
-                    ] },
-                    { "tag": "div", "fields": [
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌤️ 白天天气**: %s" } },
-                        { "is_short": true, "text": { "tag": "lark_md", "content": "**🌜 夜晚天气**: %s" } }
-                    ] }
-                """;
+        for (int j = 0; j < weather.getDailyWeathers().size(); j++) {
+            WeatherInfoBO.DailyWeather dailyWeather = weather.getDailyWeathers().get(j);
+            cardBuilder.append(getDailyWeatherContent(dailyWeather));
 
-
-        // 添加每天的天气预报
-        for (int j = 0; j < dailyWeathers.size(); j++) {
-            WeatherInfoBO.DailyWeather dailyWeather = dailyWeathers.get(j);
-            cardBuilder.append(String.format(weatherTemplate,
-                    dailyWeather.getFxDate(),
-                    dailyWeather.getSunrise(),
-                    dailyWeather.getSunset(),
-                    dailyWeather.getTempMax(),
-                    dailyWeather.getTempMin(),
-                    dailyWeather.getPrecip(),
-                    dailyWeather.getVis(),
-                    dailyWeather.getWindSpeedDay(),
-                    dailyWeather.getWindSpeedNight(),
-                    dailyWeather.getTextDay(),
-                    dailyWeather.getTextNight()));
-            if (j < dailyWeathers.size() - 1) {
-                cardBuilder.append("""
-                        ,
-                                            { "tag": "hr" },
-                        """);
+            // 添加分隔符，避免在最后一个天气信息后再添加
+            if (j < weather.getDailyWeathers().size() - 1) {
+                cardBuilder.append(", { \"tag\": \"hr\" },");
             } else {
-                cardBuilder.append("""
-                        ,
-                                            { "tag": "hr" }
-                        """);
+                cardBuilder.append(", { \"tag\": \"hr\" }");
             }
         }
 
-        // 为JSON添加闭合符号
-        cardBuilder.append(String.format("""
-                    ,{
-                        "tag": "div",
-                        "fields": [
-                            {
-                                "is_short": false,
-                                "text": {
-                                    "tag": "lark_md",
-                                    "content": %s
-                                }
-                            }
-                        ]
-                    }
-                    ]
-                }
-                """, JacksonUtils.serialize("**温馨提示**: " + weather.getSuggestion())));
+        cardBuilder.append(getFooter(weather.getSuggestion()));
         return cardBuilder.toString();
+    }
+
+    private String getCardHeader(String locationName) {
+        return String.format("""
+        {
+            "config": { "wide_screen_mode": true },
+            "header": {
+                "title": { "tag": "plain_text", "content": "%s" }
+            },
+            "elements": [
+                { "tag": "div", "fields": [
+                    { "is_short": false, "text": { "tag": "plain_text", "content": "近3天天气预报：" } }
+                ] },
+                { "tag": "hr" },
+        """, "\uD83C\uDF24️ 天气预报 - " + locationName);
+    }
+
+    private String getDailyWeatherContent(WeatherInfoBO.DailyWeather dailyWeather) {
+        return String.format("""
+        { "tag": "div", "fields": [
+            { "is_short": false, "text": { "tag": "lark_md", "content": "**📅 日期**: %s" } }
+        ] },
+        { "tag": "div", "fields": [
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌅 日出**: %s" } },
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌇 日落**: %s" } }
+        ] },
+        { "tag": "div", "fields": [
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌡️ 最高温**: %s°C" } },
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**❄️ 最低温**: %s°C" } }
+        ] },
+        { "tag": "div", "fields": [
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**💧 降水量**: %s mm" } },
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**👁️ 能见度**: %s km" } }
+        ] },
+        { "tag": "div", "fields": [
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌬️ 白天风速**: %s km/h" } },
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌙 夜晚风速**: %s km/h" } }
+        ] },
+        { "tag": "div", "fields": [
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌤️ 白天天气**: %s" } },
+            { "is_short": true, "text": { "tag": "lark_md", "content": "**🌜 夜晚天气**: %s" } }
+        ] }
+        """,
+                dailyWeather.getFxDate(),
+                dailyWeather.getSunrise(),
+                dailyWeather.getSunset(),
+                dailyWeather.getTempMax(),
+                dailyWeather.getTempMin(),
+                dailyWeather.getPrecip(),
+                dailyWeather.getVis(),
+                dailyWeather.getWindSpeedDay(),
+                dailyWeather.getWindSpeedNight(),
+                dailyWeather.getTextDay(),
+                dailyWeather.getTextNight());
+    }
+
+    private String getFooter(String suggestion) {
+        return String.format("""
+        ,{
+            "tag": "div",
+            "fields": [
+                {
+                    "is_short": false,
+                    "text": {
+                        "tag": "lark_md",
+                        "content": %s
+                    }
+                }
+            ]
+        }
+        ]
+    }
+    """, JacksonUtils.serialize("**温馨提示**: " + suggestion));
     }
 
     public String uploadImage(String base64, String receiveId, String receiveType) {
