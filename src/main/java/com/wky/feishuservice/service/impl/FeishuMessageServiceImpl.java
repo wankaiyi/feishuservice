@@ -328,16 +328,14 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                                     try {
                                         ChatResponseBO chatResponseBO = aiTask.get();
                                         ChatResponseBO predictNextQuestion = questionTask.get();
-                                        FeishuP2pResponseDTO feishuP2pResponseDTO = feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId());
-                                        feishuClient.sendP2PPredictQuestion(predictNextQuestion.getContent(), receiveId, receiveType, "interactive", feishuP2pResponseDTO.getData().getMessageId());
+                                        feishuClient.sendP2PPredictQuestion(predictNextQuestion.getContent(), receiveId, receiveType, "interactive", feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId()).getData().getMessageId());
                                     } catch (InterruptedException | ExecutionException e) {
                                         log.error("处理用户问题失败 error:", e);
                                     }
                                 }).join();
                             }
                             else {
-                                ChatResponseBO chatResponseBO = openAiClient.chat(receiveId, question);
-                                feishuClient.sendP2pMsg(chatResponseBO, receiveId, receiveType, "post", chatMessageBo.getMessageId());
+                                feishuClient.sendP2pMsg(openAiClient.chat(receiveId, question), receiveId, receiveType, "post", chatMessageBo.getMessageId());
                             }
 
                         } catch (OpenAiException e) {
