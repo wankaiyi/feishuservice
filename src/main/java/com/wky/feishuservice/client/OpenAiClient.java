@@ -46,7 +46,7 @@ public class OpenAiClient {
 
     private final ApiKeySelector apiKeySelector;
 
-    private static final Map<String, Map<String, String>> HEADER_PARAMS_MAPS = new HashMap<>();
+    public static final Map<String, Map<String, String>> HEADER_PARAMS_MAPS = new HashMap<>();
     private final RedisUtils redisUtils;
     private final OpenAiConfig openAiConfig;
     private final UserPromptMapper userPromptMapper;
@@ -132,7 +132,10 @@ public class OpenAiClient {
     }
 
     private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey) {
-        ChatRequestDTO chatRequestDTO = new ChatRequestDTO(GPT_4_O_MODEL, messages);
+        ChatRequestDTO chatRequestDTO = ChatRequestDTO.builder()
+                .model(GPT_4_O_MODEL)
+                .messages(messages)
+                .build();
         String data = JacksonUtils.serialize(chatRequestDTO);
         log.info("请求OpenAI接口，请求体：{}", data);
         // 接口超时会导致返回null
