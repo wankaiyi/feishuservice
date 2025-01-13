@@ -42,7 +42,7 @@ public class FeishuRenewCardProducer {
 
     @PostConstruct
     public void init() {
-        queue = redissonClient.getBlockingDeque("feishu:renew_card:queue");
+        queue = redissonClient.getBlockingDeque(FeishuConstants.RENEW_CARD_QUEUE_KEY);
         delayedQueue = redissonClient.getDelayedQueue(queue);
         new Thread(() -> {
             while (true) {

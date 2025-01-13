@@ -19,3 +19,9 @@ apollo:
   cluster: default
   access-key:
     secret: ${APOLLO_ACCESS_KEY}
+
+feishu:
+  openai:
+    app:
+      id: ${FEISHU_APP_ID}
+      secret: ${FEISHU_APP_SECRET}

@@ -22,6 +22,8 @@ public class FeishuConstants {
 
     public static final String FEISHU_PROMPT_OPTION_LOCK_KEY = "feishu:prompt:option:lock:%s";
 
+    public static final String RENEW_CARD_QUEUE_KEY = "feishu:renew_card:queue";
+
     public static String getFeishuEventKey(String eventId) {
         return String.format(FEISHU_EVENT_KEY, eventId);
     }
