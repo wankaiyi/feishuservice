@@ -19,7 +19,6 @@ import com.wky.feishuservice.model.common.UserInfo;
 import com.wky.feishuservice.model.dto.FeishuCallbackRequestDTO;
 import com.wky.feishuservice.model.dto.FeishuCallbackResponseDTO;
 import com.wky.feishuservice.model.dto.FeishuP2pChatDTO;
-import com.wky.feishuservice.model.dto.FeishuP2pResponseDTO;
 import com.wky.feishuservice.model.po.PromptDO;
 import com.wky.feishuservice.model.po.UserPromptSubmissionsDO;
 import com.wky.feishuservice.service.FeishuMessageService;
@@ -343,6 +342,7 @@ public class FeishuMessageServiceImpl implements FeishuMessageService {
                             feishuClient.handleP2pException(new FeishuP2pException(e.getMessage(), receiveId, receiveType));
                         } catch (FeishuP2pException e) {
                             log.error("飞书发送消息失败 error:", e);
+                            feishuClient.handleP2pException(e);
                         }
                     }
                 }
