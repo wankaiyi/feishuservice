@@ -33,7 +33,7 @@ public class GetHelpInfoStrategy implements FeishuP2pMessageStrategy {
                 指令列表
                 #image 文生图
                 #reset 重置上下文
-                #天气   查询天气
+                #天气    查询天气
                 #tp    查看线程池快照
                 #配置   配置上下文
                 #help  列出可用的指令列表
