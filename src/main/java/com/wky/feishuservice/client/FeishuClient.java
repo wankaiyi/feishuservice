@@ -177,10 +177,6 @@ public class FeishuClient {
 
 
     public String getContent(WeatherInfoBO weather) {
-        if (weather == null || weather.getDailyWeathers() == null) {
-            return "{}"; // 处理空的weather对象
-        }
-
         String cardHeader = getCardHeader(weather.getLocationName());
         StringBuilder cardBuilder = new StringBuilder(cardHeader);
 
