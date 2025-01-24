@@ -45,7 +45,7 @@ public class ApolloListener {
                     log.error("apikeys为空，无法更新配置");
                     String oldValue = changeEvent.getChange(changedKey).getOldValue();
                     openAiConfig.setApiKeys(List.of(oldValue.split(",")));
-                } catch (InterruptedException e) {
+                } catch (InterruptedException ignored) {
 
                 }
             }
