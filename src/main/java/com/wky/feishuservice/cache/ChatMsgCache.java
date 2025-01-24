@@ -5,6 +5,7 @@ import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RDeque;
+import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,7 +37,8 @@ public class ChatMsgCache {
 
     public List<ChatRequestDTO.Message> getMsgCache(String openId) {
         String key = getKey(openId);
-        return new LinkedList<>(redissonClient.getDeque(key).stream().map(str -> JacksonUtils.deserialize(str.toString(), ChatRequestDTO.Message.class)).toList());
+        RList<String> messages = redissonClient.getList(key);
+        return messages.range(0, messages.size() - 1).stream().map(str -> JacksonUtils.deserialize(str, ChatRequestDTO.Message.class)).toList();
     }
 
     private String getKey(String openId) {
