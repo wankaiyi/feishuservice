@@ -68,7 +68,7 @@ public class OpenAiClient {
         String apiKey = apiKeySelector.selectApiKey();
         List<ChatRequestDTO.Message> messages = cacheAndGetMessages(openId, text);
         // 拼接提示词
-        addPromptIfNeeded(messages, openId);
+        messages = createMessagesWithPrependedPrompts(messages, openId);
 
         ChatResponseDTO response = processChatgptRequest(messages, apiKey);
         ChatResponseDTO.ChatError error;
@@ -90,19 +90,26 @@ public class OpenAiClient {
                 .setPrice(price);
     }
 
-    private void addPromptIfNeeded(List<ChatRequestDTO.Message> messages, String openId) {
+    private List<ChatRequestDTO.Message> createMessagesWithPrependedPrompts(List<ChatRequestDTO.Message> messages, String openId) {
+        List<ChatRequestDTO.Message> newMessages = new ArrayList<>(messages);
+
         String prompt = userPromptMapper.selectUserPrompt(openId);
         List<ChatRequestDTO.Message> promptMessages = new ArrayList<>();
+
         if (Strings.isNotBlank(prompt)) {
             promptMessages.add(new ChatRequestDTO.Message("system", prompt));
         }
+
         promptMessages.addAll(
                 List.of(
                         new ChatRequestDTO.Message("user", "使用中文回答所有问题"),
                         new ChatRequestDTO.Message("assistant", "好的，了解")
                 )
         );
-        messages.addAll(0, promptMessages);
+
+        newMessages.addAll(0, promptMessages);
+
+        return newMessages;
     }
 
     private void cacheMsg(String openId, String resContent) {
@@ -194,7 +201,7 @@ public class OpenAiClient {
         List<ChatRequestDTO.Message> messages = new ArrayList<>();
         messages.add(new ChatRequestDTO.Message("user", question));
         // 拼接提示词
-        addPromptIfNeeded(messages, openId);
+        messages = createMessagesWithPrependedPrompts(messages, openId);
         ChatResponseDTO response = processChatgptRequest(
                 List.of(new ChatRequestDTO.Message("system", OpenAiConstants.PREDICT_QUESTION_PROMPT),
                         new ChatRequestDTO.Message("user", JacksonUtils.serialize(messages) + "根据这个上下文预测用户下一个问题"))
