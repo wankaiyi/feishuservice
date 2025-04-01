@@ -42,7 +42,7 @@ public class OpenAiClient {
 
     private final ChatMsgCache chatMsgCache;
 
-    private static final String GPT_4_O_MODEL = "gpt-4o";
+    private static final String GPT_4_O_MODEL = "doubao-1-5-lite-32k-250115";
 
     private final ApiKeySelector apiKeySelector;
 
