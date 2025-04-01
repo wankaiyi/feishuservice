@@ -54,7 +54,9 @@ public class PromptConfigSubmitStrategy implements FeishuCardButtonStrategy {
                         .setPromptId(userPromptSubmissionsDO.getPromptId()));
             } else {
                 userPromptDO.setPromptId(userPromptSubmissionsDO.getPromptId());
-                userPromptMapper.updateById(userPromptDO);
+		userPromptMapper.update(new LambdaUpdateWrapper<UserPromptDO>()
+                        .eq(UserPromptDO::getId, userPromptDO.getId())
+                        .set(UserPromptDO::getPromptId, userPromptSubmissionsDO.getPromptId()));
             }
             response.setToast(new FeishuCallbackResponseDTO.Toast()
                     .setType(FeishuCallbackResponseDTO.Toast.ToastType.SUCCESS.getValue())
