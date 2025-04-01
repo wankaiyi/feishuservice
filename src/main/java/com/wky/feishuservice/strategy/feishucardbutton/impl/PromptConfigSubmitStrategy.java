@@ -1,6 +1,7 @@
 package com.wky.feishuservice.strategy.feishucardbutton.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.wky.feishuservice.enumurations.FeishuCardButtonType;
 import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.mapper.UserPromptSubmissionsMapper;
