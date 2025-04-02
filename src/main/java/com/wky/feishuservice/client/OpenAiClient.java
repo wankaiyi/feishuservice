@@ -43,7 +43,7 @@ public class OpenAiClient {
 
     private final ChatMsgCache chatMsgCache;
 
-    private static final String GPT_4_O_MODEL = "deepseek-chat";
+    private static final String GPT_4_O_MODEL = "doubao-1-5-lite-32k-250115";
 
     private final ApiKeySelector apiKeySelector;
 
@@ -173,8 +173,8 @@ public class OpenAiClient {
     /**
      * 价格参考 <a href="https://openai.com/api/pricing/">OpenAI pricing</a>
      */
-    private static final BigDecimal PRICE_PER_INPUT_TOKEN = BigDecimal.valueOf(2 / 1000000.0);
-    private static final BigDecimal PRICE_PER_OUTPUT_TOKEN = BigDecimal.valueOf(8 / 1000000.0);
+    private static final BigDecimal PRICE_PER_INPUT_TOKEN = BigDecimal.valueOf(0.3 / 1000000.0);
+    private static final BigDecimal PRICE_PER_OUTPUT_TOKEN = BigDecimal.valueOf(0.6 / 1000000.0);
 
     /**
      * @param promptTokens     输入的token数

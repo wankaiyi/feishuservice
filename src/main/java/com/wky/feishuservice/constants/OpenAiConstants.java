@@ -10,11 +10,11 @@ public class OpenAiConstants {
 
     private static final String OPENAI_CHAT_LOCK_KEY = "openai:chat:lock:%s";
 
-    private static final String OPENAI_PROXY_BASE_URL = "https://api.deepseek.com";
+    private static final String OPENAI_PROXY_BASE_URL = "https://ark.cn-beijing.volces.com/api";
     //    private final String chatUrl = "https://api.openai.com/v1/chat/completions";
-    public static final String CHAT_URL = OPENAI_PROXY_BASE_URL + "/v1/chat/completions";
+    public static final String CHAT_URL = OPENAI_PROXY_BASE_URL + "/v3/chat/completions";
 
-    public final static String IMAGE_GENERATION_URL = OPENAI_PROXY_BASE_URL + "/v1/images/generations";
+    public final static String IMAGE_GENERATION_URL = OPENAI_PROXY_BASE_URL + "/v3/images/generations";
 
 
     public static String getOpenaiChatQueueRedisKey(String openId) {
