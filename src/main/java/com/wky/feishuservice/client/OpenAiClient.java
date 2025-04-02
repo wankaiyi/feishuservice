@@ -16,6 +16,7 @@ import com.wky.feishuservice.selector.ApiKeySelector;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
 import com.wky.feishuservice.utils.RedisUtils;
+import com.wky.feishuservice.utils.TimedExecutionContextHolder;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +88,8 @@ public class OpenAiClient {
                 .setContent(resContent)
                 .setModel(response.getModel())
                 .setTotalTokens(response.getUsage().getTotalTokens())
-                .setPrice(price);
+                .setPrice(price)
+                .setExecuteTime(TimedExecutionContextHolder.getExecuteTime());
     }
 
     private List<ChatRequestDTO.Message> createMessagesWithPrependedPrompts(List<ChatRequestDTO.Message> messages, String openId) {
@@ -270,3 +272,4 @@ public class OpenAiClient {
         return content;
     }
 }
+

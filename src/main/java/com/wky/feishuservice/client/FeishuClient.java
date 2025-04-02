@@ -144,7 +144,7 @@ public class FeishuClient {
                         [
                             {
                                 "tag": "text",
-                                "text": "模型：%s，total_tokens：%s，price：$%s"
+                                "text": "模型：%s，total_tokens：%s，price：$%s，耗时：%.2f秒"
                             }
                         ]
                     ]
@@ -157,7 +157,8 @@ public class FeishuClient {
         String model = chatResponseBO.getModel();
         Integer totalTokens = chatResponseBO.getTotalTokens();
         BigDecimal price = chatResponseBO.getPrice();
-        return String.format(CHAT_RESPONSE_TEMPLATE, JacksonUtils.serialize(content), model, totalTokens, price);
+        Double executeTime = chatResponseBO.getExecuteTime();
+        return String.format(CHAT_RESPONSE_TEMPLATE, JacksonUtils.serialize(content), model, totalTokens, price, executeTime);
     }
 
     public void handleP2pException(FeishuP2pException e) {
@@ -549,3 +550,4 @@ public class FeishuClient {
     }
 
 }
+

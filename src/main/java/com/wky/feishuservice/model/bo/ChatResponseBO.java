@@ -21,4 +21,6 @@ public class ChatResponseBO {
     private String model;
     private Integer totalTokens;
     private BigDecimal price;
+    private Double executeTime;
+
 }

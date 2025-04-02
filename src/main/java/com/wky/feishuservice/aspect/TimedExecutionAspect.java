@@ -1,6 +1,7 @@
 package com.wky.feishuservice.aspect;
 
 import com.wky.feishuservice.annotation.TimedExecution;
+import com.wky.feishuservice.utils.TimedExecutionContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -9,9 +10,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.Deque;
-import java.util.LinkedList;
 
 /**
  * @author wky
@@ -24,11 +22,9 @@ import java.util.LinkedList;
 @Order(2)
 public class TimedExecutionAspect {
 
-    ThreadLocal<Deque<Long>> startTimes = ThreadLocal.withInitial(LinkedList::new);
-
     @Before("@annotation(timedExecution)")
     public void doBefore(TimedExecution timedExecution) {
-        startTimes.get().push(System.currentTimeMillis());
+        TimedExecutionContextHolder.push(System.currentTimeMillis());
         log.info("\"{}\"方法开始执行", timedExecution.methodDescription());
     }
 
@@ -43,7 +39,7 @@ public class TimedExecutionAspect {
     }
 
     public void handleAfter(String methodDescription, Throwable e) {
-        long startTime = startTimes.get().pop();
+        long startTime = TimedExecutionContextHolder.poll();
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime;
         if (e == null) {
@@ -54,3 +50,4 @@ public class TimedExecutionAspect {
         }
     }
 }
+
