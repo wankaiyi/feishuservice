@@ -1,10 +1,13 @@
 package com.wky.feishuservice.client;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wky.feishuservice.annotation.TimedExecution;
 import com.wky.feishuservice.cache.ChatMsgCache;
 import com.wky.feishuservice.config.OpenAiConfig;
+import com.wky.feishuservice.constants.NullObjectConstants;
 import com.wky.feishuservice.constants.OpenAiConstants;
 import com.wky.feishuservice.exceptions.OpenAiException;
+import com.wky.feishuservice.mapper.LeetCodeCacheMapper;
 import com.wky.feishuservice.mapper.UserPromptMapper;
 import com.wky.feishuservice.model.bo.ChatResponseBO;
 import com.wky.feishuservice.model.bo.WeatherInfoBO;
@@ -12,6 +15,7 @@ import com.wky.feishuservice.model.dto.ChatRequestDTO;
 import com.wky.feishuservice.model.dto.ChatResponseDTO;
 import com.wky.feishuservice.model.dto.ImageGenerateRequestDTO;
 import com.wky.feishuservice.model.dto.ImageGenerateResponseDTO;
+import com.wky.feishuservice.model.po.LeetCodeCacheDO;
 import com.wky.feishuservice.selector.ApiKeySelector;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -51,6 +55,7 @@ public class OpenAiClient {
     private final RedisUtils redisUtils;
     private final OpenAiConfig openAiConfig;
     private final UserPromptMapper userPromptMapper;
+    private final LeetCodeCacheMapper leetCodeCacheMapper;
 
     @PostConstruct
     public void init() {
@@ -66,6 +71,11 @@ public class OpenAiClient {
 
     @TimedExecution(methodDescription = "chatgpt对话")
     public ChatResponseBO chat(String openId, String text) {
+        ChatResponseDTO chatResponseDTO = getLcTitle(text);
+        ChatResponseBO cache = getCache(chatResponseDTO);
+        if (!cache.equals(NullObjectConstants.NULL_CHAT_RESPONSE_BO)) {
+            return cache;
+        }
         String apiKey = apiKeySelector.selectApiKey();
         List<ChatRequestDTO.Message> messages = cacheAndGetMessages(openId, text);
         // 拼接提示词
@@ -84,12 +94,60 @@ public class OpenAiClient {
         BigDecimal price = getPrice(response.getUsage().getPromptTokens(), response.getUsage().getCompletionTokens());
         updateBalance(price, apiKey);
 
+        String title = chatResponseDTO.getChoices()[0].getMessageResp().getContent();
+        LeetCodeCacheDO leetCodeCacheDO = new LeetCodeCacheDO();
+        leetCodeCacheDO.setTitle(title);
+        leetCodeCacheDO.setContent(resContent);
+        leetCodeCacheMapper.insert(leetCodeCacheDO);
+
         return new ChatResponseBO()
                 .setContent(resContent)
                 .setModel(response.getModel())
                 .setTotalTokens(response.getUsage().getTotalTokens())
                 .setPrice(price)
                 .setExecuteTime(TimedExecutionContextHolder.getExecuteTime());
+    }
+
+    private static final String lcPrompt = """
+            你是一个力扣算法题库专家，擅长精准匹配算法题目。请根据以下流程处理我的需求：
+            
+            首先在题目名称中精确搜索关键词
+            
+            若无结果，则在题目描述中搜索相关关键词
+            
+            最后考虑算法标签和分类匹配
+            
+            返回格式严格遵循：
+            编号.title
+            示例：460. LFU 缓存 (LFU Cache)
+            
+            不要包含任何解释、说明或其他内容。如果找不到匹配题目，返回"未找到匹配题目"。
+            
+            我的需求是：%s
+            """;
+//                """
+//                你是一个精通力扣算法题的做题专家。当我向你描述一个功能需求时，你需要从力扣中找到最匹配该需求的算法题，先根据题目搜索，再根据题目描述搜索，最后给出清晰的题目编号及title，返回格式只要包含题目编号和title，格式为“编号.title”，如“460. LFU 缓存 (LFU Cache)”，不要包含其他额外多余的内容。我的需求是xxx。
+//                """;
+
+    private ChatResponseBO getCache(ChatResponseDTO chatResponseDTO) {
+        String title = chatResponseDTO.getChoices()[0].getMessageResp().getContent();
+        LeetCodeCacheDO leetCodeCacheDO = leetCodeCacheMapper.selectOne(new LambdaQueryWrapper<LeetCodeCacheDO>()
+                .eq(LeetCodeCacheDO::getTitle, title)
+                .select(LeetCodeCacheDO::getContent));
+        if (Objects.nonNull(leetCodeCacheDO)) {
+            return new ChatResponseBO()
+                    .setContent(leetCodeCacheDO.getContent())
+                    .setExecuteTime(TimedExecutionContextHolder.getExecuteTime())
+                    .setModel(chatResponseDTO.getModel())
+                    .setPrice(getPrice(chatResponseDTO.getUsage().getPromptTokens(), chatResponseDTO.getUsage().getCompletionTokens()))
+                    .setTotalTokens(chatResponseDTO.getUsage().getTotalTokens());
+        }
+        return NullObjectConstants.NULL_CHAT_RESPONSE_BO;
+    }
+
+    private ChatResponseDTO getLcTitle(String text) {
+        List<ChatRequestDTO.Message> messages = List.of(new ChatRequestDTO.Message().setRole("system").setContent(String.format(lcPrompt, text)));
+        return processChatgptRequest(messages, apiKeySelector.selectApiKey());
     }
 
     private List<ChatRequestDTO.Message> createMessagesWithPrependedPrompts(List<ChatRequestDTO.Message> messages, String openId) {
