@@ -119,7 +119,7 @@ public class OpenAiClient {
             
             返回格式严格遵循：
             编号.title
-            示例：460. LFU 缓存 (LFU Cache)
+            示例：460.LFU缓存
             
             不要包含任何解释、说明或其他内容。如果找不到匹配题目，返回"未找到匹配题目"。
             
@@ -147,7 +147,7 @@ public class OpenAiClient {
 
     private ChatResponseDTO getLcTitle(String text) {
         List<ChatRequestDTO.Message> messages = List.of(new ChatRequestDTO.Message().setRole("system").setContent(String.format(lcPrompt, text)));
-        return processChatgptRequest(messages, apiKeySelector.selectApiKey());
+        return processChatgptRequest(messages, apiKeySelector.selectApiKey(), 0.0);
     }
 
     private List<ChatRequestDTO.Message> createMessagesWithPrependedPrompts(List<ChatRequestDTO.Message> messages, String openId) {
@@ -199,9 +199,14 @@ public class OpenAiClient {
     }
 
     private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey) {
+        return processChatgptRequest(messages, apiKey, null);
+    }
+
+    private static ChatResponseDTO processChatgptRequest(List<ChatRequestDTO.Message> messages, String apiKey, Double temperature) {
         ChatRequestDTO chatRequestDTO = ChatRequestDTO.builder()
                 .model(GPT_4_O_MODEL)
                 .messages(messages)
+                .temperature(temperature)
                 .build();
         String data = JacksonUtils.serialize(chatRequestDTO);
         log.info("请求OpenAI接口，请求体：{}", data);

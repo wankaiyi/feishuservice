@@ -23,6 +23,7 @@ public class ChatRequestDTO {
     private String model;
     private List<Message> messages;
     private Prediction prediction;
+    private Double temperature;
     private Boolean stream;
 
     @Data
