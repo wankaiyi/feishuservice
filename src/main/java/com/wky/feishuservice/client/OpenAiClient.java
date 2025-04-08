@@ -16,6 +16,7 @@ import com.wky.feishuservice.model.dto.ChatResponseDTO;
 import com.wky.feishuservice.model.dto.ImageGenerateRequestDTO;
 import com.wky.feishuservice.model.dto.ImageGenerateResponseDTO;
 import com.wky.feishuservice.model.po.LeetCodeCacheDO;
+import com.wky.feishuservice.model.po.UserPromptDO;
 import com.wky.feishuservice.selector.ApiKeySelector;
 import com.wky.feishuservice.utils.HttpUtils;
 import com.wky.feishuservice.utils.JacksonUtils;
@@ -71,11 +72,16 @@ public class OpenAiClient {
 
     @TimedExecution(methodDescription = "chatgpt对话")
     public ChatResponseBO chat(String openId, String text) {
-        ChatResponseDTO chatResponseDTO = getLcTitle(text);
-        ChatResponseBO cache = getCache(chatResponseDTO);
-        if (!cache.equals(NullObjectConstants.NULL_CHAT_RESPONSE_BO)) {
-            return cache;
+        boolean isLeetCodeMode = isLeetCodeMode(openId);
+        ChatResponseDTO chatResponseDTO = null;
+        if (isLeetCodeMode) {
+            chatResponseDTO = getLcTitle(text);
+            ChatResponseBO cache = getCache(chatResponseDTO);
+            if (!cache.equals(NullObjectConstants.NULL_CHAT_RESPONSE_BO)) {
+                return cache;
+            }
         }
+
         String apiKey = apiKeySelector.selectApiKey();
         List<ChatRequestDTO.Message> messages = cacheAndGetMessages(openId, text);
         // 拼接提示词
@@ -88,20 +94,38 @@ public class OpenAiClient {
         }
 
         String resContent = response.getChoices()[0].getMessageResp().getContent();
-
         cacheMsg(openId, resContent);
 
         BigDecimal price = getPrice(response.getUsage().getPromptTokens(), response.getUsage().getCompletionTokens());
         updateBalance(price, apiKey);
 
-        String title = chatResponseDTO.getChoices()[0].getMessageResp().getContent();
-        LeetCodeCacheDO leetCodeCacheDO = new LeetCodeCacheDO();
-        leetCodeCacheDO.setTitle(title);
-        leetCodeCacheDO.setContent(resContent);
-        leetCodeCacheMapper.insert(leetCodeCacheDO);
+        if (isLeetCodeMode) {
+            String title = chatResponseDTO.getChoices()[0].getMessageResp().getContent();
+            LeetCodeCacheDO leetCodeCacheDO = new LeetCodeCacheDO();
+            leetCodeCacheDO.setTitle(title);
+            leetCodeCacheDO.setContent(resContent);
+            leetCodeCacheMapper.insert(leetCodeCacheDO);
+        }
 
+        return buildChatResponseBO(response, resContent, price);
+    }
+
+    private boolean isLeetCodeMode(String openId) {
+        UserPromptDO userPrompt = userPromptMapper.selectOne(
+                new LambdaQueryWrapper<UserPromptDO>()
+                        .eq(UserPromptDO::getOpenId, openId)
+                        .select(UserPromptDO::getPromptId)
+        );
+        return userPrompt != null && userPrompt.getPromptId() == 186L;
+    }
+
+    private ChatResponseBO buildChatResponseBO(
+            ChatResponseDTO response,
+            String content,
+            BigDecimal price
+    ) {
         return new ChatResponseBO()
-                .setContent(resContent)
+                .setContent(content)
                 .setModel(response.getModel())
                 .setTotalTokens(response.getUsage().getTotalTokens())
                 .setPrice(price)
